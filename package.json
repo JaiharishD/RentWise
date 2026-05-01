@@ -4,7 +4,8 @@
   "description": "RentWise — Smart Storage, Simplified",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "postinstall": "npm rebuild sqlite3 --build-from-source"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
