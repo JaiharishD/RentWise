@@ -1,27 +1,36 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const isVercel = process.env.VERCEL === '1';
-const dataDir = isVercel ? '/tmp/data' : path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
+let db;
+let DATA_FILE;
+let startupError = null;
 
-// When on Vercel, copy the default data.json if content.json doesn't exist
-const DATA_FILE = path.join(dataDir, 'content.json');
-if (isVercel && !fs.existsSync(DATA_FILE) && fs.existsSync(path.join(__dirname, 'data.json'))) {
-  fs.copyFileSync(path.join(__dirname, 'data.json'), DATA_FILE);
-}
+try {
+  const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_URL !== undefined;
+  const dataDir = isVercel ? '/tmp/data' : path.join(__dirname, 'data');
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
 
-const DB_FILE = path.join(dataDir, 'users.db');
-const db = new sqlite3.Database(DB_FILE);
+  // When on Vercel, copy the default data.json if content.json doesn't exist
+  DATA_FILE = path.join(dataDir, 'content.json');
+  if (isVercel && !fs.existsSync(DATA_FILE) && fs.existsSync(path.join(__dirname, 'data.json'))) {
+    fs.copyFileSync(path.join(__dirname, 'data.json'), DATA_FILE);
+  }
+
+  const DB_FILE = path.join(dataDir, 'users.db');
+  const sqlite3 = require('sqlite3').verbose();
+  db = new sqlite3.Database(DB_FILE);
+} catch (err) {
+  console.error("STARTUP ERROR:", err);
+  startupError = err;
+}
 
 function isRemoteImageUrl(url) {
   return typeof url === 'string' && /^https?:\/\//i.test(url);
@@ -51,6 +60,14 @@ app.use(session({
   saveUninitialized: false,
   cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
+
+// Provide startup error directly in browser if it crashed
+app.use((req, res, next) => {
+  if (startupError) {
+    return res.status(500).send(`Server failed to start. Error: ${startupError.message}\nStack: ${startupError.stack}`);
+  }
+  next();
+});
 
 // ── MIDDLEWARE ─────────────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
@@ -91,61 +108,63 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── INIT DATABASE ──────────────────────────────────────────────────────────────
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'renter',
-    display_name TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+if (db) {
+  db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'renter',
+      display_name TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
 
-  db.run(`CREATE TABLE IF NOT EXISTS listings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    provider_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    price INTEGER DEFAULT 0,
-    location TEXT,
-    size TEXT DEFAULT 'Medium',
-    description TEXT,
-    image TEXT, /* Stores raw Base64 string */
-    images TEXT DEFAULT '[]',
-    badge TEXT DEFAULT 'New',
-    badgeType TEXT DEFAULT 'default',
-    tags TEXT DEFAULT '[]',
-    features TEXT DEFAULT '[]',
-    available INTEGER DEFAULT 1,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+    db.run(`CREATE TABLE IF NOT EXISTS listings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      price INTEGER DEFAULT 0,
+      location TEXT,
+      size TEXT DEFAULT 'Medium',
+      description TEXT,
+      image TEXT, /* Stores raw Base64 string */
+      images TEXT DEFAULT '[]',
+      badge TEXT DEFAULT 'New',
+      badgeType TEXT DEFAULT 'default',
+      tags TEXT DEFAULT '[]',
+      features TEXT DEFAULT '[]',
+      available INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
 
-  // Smart Fallback: Inject columns if the database is older and missing them.
-  const columnsToAdd = [
-    "image TEXT",
-    "images TEXT DEFAULT '[]'",
-    "badge TEXT DEFAULT 'New'",
-    "badgeType TEXT DEFAULT 'default'",
-    "tags TEXT DEFAULT '[]'",
-    "features TEXT DEFAULT '[]'",
-    "available INTEGER DEFAULT 1",
-    "verified INTEGER DEFAULT 0"
-  ];
-  columnsToAdd.forEach(col => {
-    db.run(`ALTER TABLE listings ADD COLUMN ${col}`, () => {});
+    // Smart Fallback: Inject columns if the database is older and missing them.
+    const columnsToAdd = [
+      "image TEXT",
+      "images TEXT DEFAULT '[]'",
+      "badge TEXT DEFAULT 'New'",
+      "badgeType TEXT DEFAULT 'default'",
+      "tags TEXT DEFAULT '[]'",
+      "features TEXT DEFAULT '[]'",
+      "available INTEGER DEFAULT 1",
+      "verified INTEGER DEFAULT 0"
+    ];
+    columnsToAdd.forEach(col => {
+      db.run(`ALTER TABLE listings ADD COLUMN ${col}`, () => {});
+    });
+
+    db.run(`CREATE TABLE IF NOT EXISTS bookings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      listing_id TEXT NOT NULL,
+      listing_name TEXT,
+      renter_id INTEGER NOT NULL,
+      start_date TEXT,
+      end_date TEXT,
+      total_amount INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
   });
-
-  db.run(`CREATE TABLE IF NOT EXISTS bookings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    listing_id TEXT NOT NULL,
-    listing_name TEXT,
-    renter_id INTEGER NOT NULL,
-    start_date TEXT,
-    end_date TEXT,
-    total_amount INTEGER DEFAULT 0,
-    status TEXT DEFAULT 'pending',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-});
+}
 
 // ── AUTH ENDPOINTS ─────────────────────────────────────────────────────────────
 app.post('/api/register', (req, res) => {
