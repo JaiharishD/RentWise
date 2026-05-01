@@ -11,8 +11,9 @@ let db;
 let DATA_FILE;
 let startupError = null;
 
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_URL !== undefined;
+
 try {
-  const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_URL !== undefined;
   const dataDir = isVercel ? '/tmp/data' : path.join(__dirname, 'data');
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
