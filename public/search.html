@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RentWise — Search Storage</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/app-shell.css" />
+</head>
+<body>
+<header class="app-topbar">
+  <a class="brand" href="/"><strong>Rent</strong><span>Wise</span></a>
+  <div id="topbar-right" class="hero-actions">
+    <a class="btn btn-ghost" href="/">Home</a>
+    <a class="btn btn-dark" href="/provider-dashboard">List your space</a>
+  </div>
+</header>
+
+<main class="app-shell">
+  <section class="page-hero">
+    <div class="page-kicker">Search Storage</div>
+    <h1 class="page-title">Find the right space fast.</h1>
+    <p class="page-subtitle">Filter by price, size, distance, and features to find your perfect storage space.</p>
+    <div class="search-card">
+      <div class="search-grid">
+        <div class="field"><label>Location</label><input id="locationFilter" type="text" placeholder="City or area" /></div>
+        <div class="field"><label>Size</label>
+          <select id="sizeFilter">
+            <option value="">Any size</option>
+            <option>Small</option><option>Medium</option><option>Large</option>
+          </select>
+        </div>
+        <div class="field"><label>Type</label>
+          <select id="typeFilter">
+            <option value="">Any type</option>
+            <option>House Space</option><option>Car Parking</option><option>Warehouse</option><option>Locker</option><option>Pod Storage</option>
+          </select>
+        </div>
+        <div class="field"><label>Max price / mo</label>
+          <div class="range-row">
+            <input id="priceFilter" type="range" min="500" max="10000" step="100" value="10000" />
+            <output id="priceValue">₹10,000</output>
+          </div>
+        </div>
+      </div>
+      <div class="chips" id="featureChips"></div>
+    </div>
+  </section>
+
+  <section class="section-block layout-grid results">
+    <aside class="sidebar-card">
+      <div class="filter-group">
+        <h3>Filters</h3>
+        <div class="field"><label>Size</label><div class="chips" id="sizeChips"></div></div>
+        <div class="field" style="margin-top:0.75rem;"><label>Max distance</label><div class="chips" id="distanceChips"></div></div>
+        <div class="field" style="margin-top:0.75rem;"><label>Features</label><div class="chips" id="sidebarFeatureChips"></div></div>
+        <div class="field" style="margin-top:0.75rem;"><label>Verified only</label>
+          <div class="chips"><button class="chip" id="verifiedChip" data-verified="false">Verified only</button></div>
+        </div>
+      </div>
+      <div class="small">Tip: Combine size and feature filters for the closest match.</div>
+      <button class="btn btn-ghost" id="clearFilters" style="width:100%;margin-top:1rem;">Clear all filters</button>
+    </aside>
+
+    <div>
+      <div class="results-header">
+        <div>
+          <h2 style="font-family:Outfit,sans-serif;margin:0;">Storage Listings</h2>
+          <p class="small" id="resultCount">Loading…</p>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <label class="small">Sort:</label>
+          <select id="sortSelect" style="border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.75rem;font-family:inherit;font-size:0.85rem;">
+            <option value="price-asc">Price: Low → High</option>
+            <option value="price-desc">Price: High → Low</option>
+            <option value="rating-desc">Best rated</option>
+            <option value="distance-asc">Nearest first</option>
+          </select>
+        </div>
+      </div>
+      <div class="results-grid" id="resultsGrid">
+        <div class="panel-card">Loading listings…</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const ALL_FEATURES = ['CCTV', 'Climate Control', '24/7 Access', 'Verified', 'Ground Floor', 'Loading Dock'];
+const SIZES = ['Small', 'Medium', 'Large'];
+const DISTANCES = [2, 5, 10, 20];
+
+let allListings = [];
+const filters = { location: '', size: '', type: '', price: 10000, distance: null, features: new Set(), verified: false };
+
+function money(v) { return `₹${Number(v).toLocaleString('en-IN')}`; }
+
+function buildChips(containerId, items, dataAttr, activeSet) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = items.map(v => `<button class="chip${activeSet && activeSet.has(String(v)) ? ' active' : ''}" data-${dataAttr}="${v}">${v}${dataAttr==='distance'?' km':''}</button>`).join('');
+}
+
+function initChips() {
+  buildChips('sizeChips', SIZES, 'size', null);
+  buildChips('distanceChips', DISTANCES, 'distance', null);
+  buildChips('sidebarFeatureChips', ALL_FEATURES, 'feature', filters.features);
+  buildChips('featureChips', ALL_FEATURES, 'feature-top', filters.features);
+
+  document.querySelectorAll('[data-size]').forEach(b => b.addEventListener('click', () => {
+    filters.size = filters.size === b.dataset.size ? '' : b.dataset.size;
+    document.getElementById('sizeFilter').value = filters.size;
+    document.querySelectorAll('[data-size]').forEach(x => x.classList.toggle('active', x.dataset.size === filters.size));
+    render();
+  }));
+  document.querySelectorAll('[data-distance]').forEach(b => b.addEventListener('click', () => {
+    filters.distance = filters.distance === Number(b.dataset.distance) ? null : Number(b.dataset.distance);
+    document.querySelectorAll('[data-distance]').forEach(x => x.classList.toggle('active', Number(x.dataset.distance) === filters.distance));
+    render();
+  }));
+  const featureToggle = (b, feat) => {
+    if (filters.features.has(feat)) filters.features.delete(feat); else filters.features.add(feat);
+    document.querySelectorAll(`[data-feature="${feat}"],[data-feature-top="${feat}"]`).forEach(x => x.classList.toggle('active', filters.features.has(feat)));
+    render();
+  };
+  document.querySelectorAll('[data-feature]').forEach(b => b.addEventListener('click', () => featureToggle(b, b.dataset.feature)));
+  document.querySelectorAll('[data-feature-top]').forEach(b => b.addEventListener('click', () => featureToggle(b, b.dataset.featureTop)));
+
+  document.getElementById('verifiedChip').addEventListener('click', (e) => {
+    filters.verified = !filters.verified;
+    e.target.classList.toggle('active', filters.verified);
+    e.target.dataset.verified = String(filters.verified);
+    render();
+  });
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    filters.location = ''; filters.size = ''; filters.type = ''; filters.price = 10000;
+    filters.distance = null; filters.features.clear(); filters.verified = false;
+    document.getElementById('locationFilter').value = '';
+    document.getElementById('sizeFilter').value = '';
+    document.getElementById('typeFilter').value = '';
+    document.getElementById('priceFilter').value = 10000;
+    document.getElementById('priceValue').textContent = '₹10,000';
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    render();
+  });
+}
+
+function bindInputs() {
+  document.getElementById('locationFilter').addEventListener('input', e => { filters.location = e.target.value; render(); });
+  document.getElementById('sizeFilter').addEventListener('change', e => {
+    filters.size = e.target.value;
+    document.querySelectorAll('[data-size]').forEach(x => x.classList.toggle('active', x.dataset.size === filters.size));
+    render();
+  });
+  document.getElementById('typeFilter').addEventListener('change', e => { filters.type = e.target.value; render(); });
+  document.getElementById('priceFilter').addEventListener('input', e => {
+    filters.price = Number(e.target.value);
+    document.getElementById('priceValue').textContent = money(filters.price);
+    render();
+  });
+  document.getElementById('sortSelect').addEventListener('change', render);
+}
+
+function matches(item) {
+  if (filters.verified && item.badgeType !== 'verified') return false;
+  if (filters.location) {
+    const loc = (item.location + ' ' + item.name).toLowerCase();
+    if (!loc.includes(filters.location.toLowerCase())) return false;
+  }
+  if (filters.size && item.size !== filters.size) return false;
+  if (filters.type && item.type !== filters.type) return false;
+  if (Number(item.price) > filters.price) return false;
+  if (filters.distance !== null && Number(item.distance) > filters.distance) return false;
+  for (const f of filters.features) {
+    const feats = item.features || item.tags || [];
+    if (!feats.some(x => x.toLowerCase().includes(f.toLowerCase()))) return false;
+  }
+  return true;
+}
+
+function sorted(items) {
+  const s = document.getElementById('sortSelect').value;
+  return [...items].sort((a, b) => {
+    if (s === 'price-asc') return a.price - b.price;
+    if (s === 'price-desc') return b.price - a.price;
+    if (s === 'rating-desc') return (b.rating||0) - (a.rating||0);
+    if (s === 'distance-asc') return (a.distance||999) - (b.distance||999);
+    return 0;
+  });
+}
+
+function cardHTML(item) {
+  const feats = item.features || item.tags || [];
+  const tagsHTML = feats.slice(0,4).map(t => `<span class="tag">${t}</span>`).join('');
+  const rating = item.rating ? `<span style="color:#d32f2f;">★</span> ${item.rating}${item.reviewCount ? ` · ${item.reviewCount} reviews` : ''}` : '';
+  const dist = item.distance ? `${item.distance} km away · ` : '';
+  return `
+    <article class="card">
+      <div class="card-media">
+        ${(item.images && item.images[0]) ? `<img src="${item.images[0]}" alt="${item.name}" loading="lazy" />` : (item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy" />` : `<div style="font-size:3rem;display:flex;align-items:center;justify-content:center;height:100%;">${item.emoji||'📦'}</div>`)}
+        <span class="card-badge ${item.badgeType==='verified'?'verified':''}">${item.badge||'Available'}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h3 class="card-title">${item.name}</h3>
+          <div class="card-price">${money(item.price)}<span style="font-size:0.78rem;color:#738095;font-weight:500;">/mo</span></div>
+        </div>
+        <div class="card-meta">📍 ${item.location} · ${dist}${rating}</div>
+        <div class="card-tags">${tagsHTML}</div>
+        <div class="card-actions">
+          <a class="btn btn-outline" href="/storage?id=${item.id}">View Details</a>
+          <a class="btn btn-primary" href="/booking?id=${item.id}">Book Now</a>
+        </div>
+      </div>
+    </article>`;
+}
+
+function render() {
+  const filtered = sorted(allListings.filter(matches));
+  const grid = document.getElementById('resultsGrid');
+  document.getElementById('resultCount').textContent = `${filtered.length} space${filtered.length !== 1 ? 's' : ''} found`;
+  grid.innerHTML = filtered.length ? filtered.map(cardHTML).join('') : `<div class="panel-card" style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);">No storage spaces match your filters. Try adjusting your search.</div>`;
+}
+
+async function init() {
+  // Pre-fill from URL params
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('location')) { filters.location = params.get('location'); document.getElementById('locationFilter').value = filters.location; }
+  if (params.get('size')) { filters.size = params.get('size'); document.getElementById('sizeFilter').value = filters.size; }
+
+  // Load session for topbar
+  const sessRes = await fetch('/api/session');
+  const { user } = await sessRes.json();
+  if (user) {
+    const dest = user.role === 'provider' ? '/provider-dashboard' : '/dashboard';
+    document.getElementById('topbar-right').innerHTML = `
+      <span style="font-size:0.85rem;color:var(--muted);">Hi, ${user.displayName.split(' ')[0]}</span>
+      <a class="btn btn-ghost" href="${dest}">Dashboard</a>
+      <button class="btn btn-dark" id="logout-btn">Sign out</button>`;
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await fetch('/api/logout', { method: 'POST' }); window.location.href = '/';
+    });
+  }
+
+  // Load listings
+  const res = await fetch('/api/listings');
+  const data = await res.json();
+  allListings = data.listings || [];
+
+  initChips();
+  bindInputs();
+  render();
+}
+
+init().catch(e => {
+  document.getElementById('resultsGrid').innerHTML = `<div class="panel-card">Failed to load listings. Ensure server is running.</div>`;
+});
+</script>
+</body>
+</html>

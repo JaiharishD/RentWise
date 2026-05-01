@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RentWise — Hosting Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/app-shell.css" />
+<style>
+  .modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+  .modal.open { opacity: 1; pointer-events: auto; }
+  .modal-card { width: min(100%, 640px); max-height: 90vh; overflow-y: auto; background: var(--surface-strong); border-radius: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.2); transform: translateY(20px) scale(0.98); transition: transform 0.25s ease; padding: 2rem; }
+  .modal.open .modal-card { transform: translateY(0) scale(1); }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+  .modal-title { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 700; margin: 0; }
+  .modal-close { border: none; background: var(--light-gray); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; transition: background 0.2s; }
+  .modal-close:hover { background: var(--border); }
+  
+  .hidden { display: none !important; }
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); background: #f9fafb; border: 2px dashed var(--border); border-radius: 20px; grid-column: 1/-1; }
+  .empty-state h3 { font-family: 'Outfit', sans-serif; color: var(--text); font-size: 1.4rem; margin-bottom: 0.5rem; }
+  
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.8rem; margin-top: 0.5rem; }
+  .feature-label { display: flex; align-items: center; gap: 0.6rem; font-size: 0.9rem; font-weight: 500; cursor: pointer; background: #f4f5f7; padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid transparent; transition: all 0.2s; }
+  .feature-label:hover { background: #eef0f4; border-color: var(--border); }
+  .feature-label input { width: 16px; height: 16px; accent-color: var(--red); }
+  
+  #toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--green); color: white; padding: 1rem 1.5rem; border-radius: 12px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.15); transform: translateY(100px); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.error { background: var(--red); }
+</style>
+</head>
+<body>
+
+<div id="toast">Changes saved successfully.</div>
+
+<header class="app-topbar">
+  <a class="brand" href="/"><strong>Rent</strong><span>Wise</span></a>
+  <div class="hero-actions">
+    <span id="user-greeting" style="font-size:0.9rem; font-weight:500; color:var(--muted); margin-right: 1rem; align-self: center;"></span>
+    <button class="btn btn-primary" onclick="openSpaceModal()">+ Add New Space</button>
+    <button class="btn btn-ghost" id="logout-btn">Sign out</button>
+  </div>
+</header>
+
+<main class="app-shell">
+  <section class="page-hero">
+    <div class="page-kicker">Hosting Workspace</div>
+    <h1 class="page-title">Welcome back to hosting.</h1>
+    <p class="page-subtitle">Manage your personal listings, approve space tenant bookings, and track your revenue growth.</p>
+  </section>
+
+  <section class="section-block dashboard-layout">
+    <nav class="dashboard-nav" id="sidebar-nav">
+      <a class="active" href="#" data-target="overview">Dashboard Overview</a>
+      <a href="#" data-target="spaces">My Listed Spaces</a>
+      <a href="#" data-target="bookings">Tenant Reservations</a>
+    </nav>
+
+    <div class="dashboard-main">
+      <div id="tab-overview" class="tab-content">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="label">Total Revenue</div><div class="value" id="kpi-earnings" style="color:var(--green);">₹0</div></div>
+          <div class="kpi"><div class="label">Your Spaces</div><div class="value" id="kpi-spaces">0</div></div>
+          <div class="kpi"><div class="label">Total Reservations</div><div class="value" id="kpi-bookings">0</div></div>
+          <div class="kpi"><div class="label">Pending Action</div><div class="value" id="kpi-pending" style="color:var(--red);">0</div></div>
+        </div>
+        
+        <div class="dashboard-card" style="margin-top: 1.5rem;">
+          <div class="section-heading"><h2>Recent Tenant Activity</h2><p>Latest updates on your storage units.</p></div>
+          <div id="recent-activity-container"></div>
+        </div>
+      </div>
+
+      <div id="tab-spaces" class="tab-content hidden">
+        <div class="section-heading" style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div>
+            <h2>Your Properties</h2>
+            <p>Spaces linked directly to your host account.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openSpaceModal()">+ Add New Space</button>
+        </div>
+        <div id="spaces-grid" class="results-grid"></div>
+      </div>
+
+      <div id="tab-bookings" class="tab-content hidden">
+        <div class="dashboard-card">
+          <div class="section-heading"><h2>Reservation Requests</h2><p>Review, approve, or decline incoming bookings.</p></div>
+          <div style="overflow-x:auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Property</th>
+                  <th>Tenant</th>
+                  <th>Duration</th>
+                  <th>Payout</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="bookings-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="space-modal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title" id="modal-title">List a New Space</h2>
+        <p style="color:var(--muted); font-size:0.9rem; margin-top:0.3rem;">Provide clear details to attract tenants.</p>
+      </div>
+      <button class="modal-close" onclick="closeSpaceModal()">×</button>
+    </div>
+    
+    <form id="space-form" class="layout-grid" onsubmit="saveSpace(event)">
+      <input type="hidden" id="space-id" />
+      <input type="hidden" id="space-image-url" />
+      
+      <div class="field">
+        <label>Property Title <span style="color:var(--red);">*</span></label>
+        <input type="text" id="space-name" placeholder="e.g., Secure Basement Crate Storage" required />
+      </div>
+      
+      <div class="form-grid-2">
+        <div class="field">
+          <label>Monthly Rate (₹) <span style="color:var(--red);">*</span></label>
+          <input type="number" id="space-price" placeholder="2500" required />
+        </div>
+        <div class="field">
+          <label>Location / Pincode <span style="color:var(--red);">*</span></label>
+          <input type="text" id="space-location" placeholder="Downtown, Sector 4" required />
+        </div>
+      </div>
+      
+      <div class="form-grid-2">
+        <div class="field">
+          <label>Storage Capacity</label>
+          <select id="space-size">
+            <option value="Small">Small (Few Crates)</option>
+            <option value="Medium" selected>Medium (Standard Room)</option>
+            <option value="Large">Large (Garage/Warehouse)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Property Category</label>
+          <select id="space-badge">
+            <option value="House Space">House Space</option>
+            <option value="Car Parking">Car Parking</option>
+            <option value="Commercial">Commercial</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Access Rules & Description</label>
+        <textarea id="space-desc" rows="3" placeholder="Describe access hours, security measures, and what items are permitted..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Cover Image (Optional)</label>
+        <div style="display:flex; gap:1rem; align-items:flex-start;">
+          <input type="file" id="space-image-file" accept="image/*" multiple onchange="uploadImage(event)" style="flex:1;" />
+          <div id="image-previews" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Amenities & Features</label>
+        <div class="feature-grid">
+          <label class="feature-label"><input type="checkbox" value="CCTV" class="feat-cb"> CCTV</label>
+          <label class="feature-label"><input type="checkbox" value="Climate Control" class="feat-cb"> Climate</label>
+          <label class="feature-label"><input type="checkbox" value="24/7 Access" class="feat-cb"> 24/7 Access</label>
+          <label class="feature-label"><input type="checkbox" value="Security Guard" class="feat-cb"> Security Guard</label>
+          <label class="feature-label"><input type="checkbox" value="Lockable" class="feat-cb"> Lockable</label>
+          <label class="feature-label"><input type="checkbox" value="Ground Floor" class="feat-cb"> Ground Floor</label>
+        </div>
+      </div>
+      
+      <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem; border-top:1px solid var(--border); padding-top:1.5rem;">
+        <button type="button" class="btn btn-ghost" onclick="closeSpaceModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="save-btn">Publish Listing</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let state = { user: null, listings: [], bookings: [] };
+let currentEditSpace = null; 
+let pendingFiles = []; // files selected but not yet uploaded
+let existingImages = []; // images already saved on the listing
+
+async function init() {
+  try {
+    const sessRes = await fetch('/api/session');
+    const { user } = await sessRes.json();
+    if (!user || user.role !== 'provider') { window.location.href = '/?login=1'; return; }
+    state.user = user;
+    document.getElementById('user-greeting').textContent = `Host Dashboard: ${user.displayName}`;
+    await refreshData();
+    setupNavigation();
+  } catch (e) { console.error('Initialization failed', e); }
+}
+
+async function refreshData() {
+  const [listRes, bookRes] = await Promise.all([ fetch('/api/my/listings'), fetch('/api/my/bookings') ]);
+  const listData = await listRes.json();
+  const bookData = await bookRes.json();
+  state.listings = listData.listings || [];
+  state.bookings = bookData.bookings || [];
+  renderDashboard();
+}
+
+function showToast(message, isError = false) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = isError ? 'show error' : 'show';
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+function switchTab(target) {
+  document.querySelectorAll('#sidebar-nav a').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+  const navItem = document.querySelector(`[data-target="${target}"]`);
+  if(navItem) navItem.classList.add('active');
+  const content = document.getElementById('tab-' + target);
+  if(content) content.classList.remove('hidden');
+}
+
+function setupNavigation() {
+  const tabs = document.querySelectorAll('#sidebar-nav a');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', (e) => { e.preventDefault(); switchTab(tab.dataset.target); });
+  });
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await fetch('/api/logout', { method: 'POST' });
+    window.location.href = '/';
+  });
+}
+
+function renderDashboard() {
+  const earnings = state.bookings
+    .filter(b => b.status === 'completed' || b.status === 'confirmed')
+    .reduce((sum, b) => sum + (b.total_amount || 0), 0);
+  const pending = state.bookings.filter(b => b.status === 'pending').length;
+
+  document.getElementById('kpi-earnings').textContent = `₹${earnings.toLocaleString('en-IN')}`;
+  document.getElementById('kpi-spaces').textContent = state.listings.length;
+  document.getElementById('kpi-bookings').textContent = state.bookings.length;
+  document.getElementById('kpi-pending').textContent = pending;
+
+  renderSpaces();
+  renderBookings();
+}
+
+function renderSpaces() {
+  const grid = document.getElementById('spaces-grid');
+  if (state.listings.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><h3>No properties listed yet</h3><p>List your first space to start earning from space tenants.</p><button class="btn btn-primary" style="margin-top:1.5rem;" onclick="openSpaceModal()">Create Listing</button></div>`;
+    return;
+  }
+  grid.innerHTML = state.listings.map(l => `
+    <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+      <div class="card-media">
+        <span class="card-badge">${l.badge || 'Space'}</span>
+        ${(l.images && l.images[0]) ? `<img src="${l.images[0]}" alt="${l.name}">` : (l.image ? `<img src="${l.image}" alt="${l.name}">` : `<div style="display:grid;place-items:center;width:100%;height:100%;font-size:3rem;background:#eee;">📦</div>`)}
+      </div>
+      <div class="card-body">
+        <div class="card-title-row"><h3 class="card-title">${l.name}</h3></div>
+        <div class="card-meta" style="margin-bottom:0.8rem;">📍 ${l.location}</div>
+        <div class="card-tags"><span class="tag">${l.size}</span><span class="tag">₹${(l.price||0).toLocaleString('en-IN')}/mo</span></div>
+      </div>
+      <div style="display:flex; gap:0.5rem; padding: 1rem; border-top: 1px solid var(--border); background: #fafafa; margin-top: auto;">
+        <button class="btn btn-outline" style="flex:1; padding:0.5rem;" onclick="editSpace(${l.id})">Edit Property</button>
+        <button class="btn btn-ghost" style="color:var(--red); padding:0.5rem;" onclick="deleteSpace(${l.id})">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderBookings() {
+  const tbody = document.getElementById('bookings-tbody');
+  const activityContainer = document.getElementById('recent-activity-container');
+  
+  if (state.bookings.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="border:none;">No reservations received yet.</td></tr>`;
+    activityContainer.innerHTML = `<div style="color:var(--muted); padding:1rem 0;">No recent activity on your listings.</div>`;
+    return;
+  }
+
+  tbody.innerHTML = state.bookings.map(b => {
+    let actions = '';
+    if (b.status === 'pending') {
+      actions = `<button class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.8rem; border-color:var(--green); color:var(--green);" onclick="updateStatus(${b.id}, 'confirmed')">Accept</button>
+                 <button class="btn btn-ghost" style="padding:0.4rem 0.8rem; font-size:0.8rem; color:var(--red);" onclick="updateStatus(${b.id}, 'cancelled')">Decline</button>`;
+    }
+    let statusClass = (b.status === 'confirmed' || b.status === 'completed') ? 'verified' : (b.status === 'pending' ? 'pending' : '');
+    return `<tr><td style="font-weight:600;">${b.listing_name || 'Property'}</td><td>${b.renter_name || 'Tenant'}</td><td><span class="small">${b.start_date || 'N/A'} to ${b.end_date || 'N/A'}</span></td><td style="font-weight:700; color:var(--green);">₹${(b.total_amount||0).toLocaleString('en-IN')}</td><td><span class="status ${statusClass}" style="text-transform:capitalize;">${b.status}</span></td><td style="display:flex; gap:0.5rem;">${actions}</td></tr>`;
+  }).join('');
+
+  activityContainer.innerHTML = state.bookings.slice(0,3).map(b => `
+    <div class="timeline-item" style="margin-bottom:1rem; border-radius:12px;">
+      <div class="timeline-dot" style="${b.status==='pending'?'background:#f59e0b;':(b.status==='cancelled'?'background:var(--red);':'background:var(--green);')}"></div>
+      <div class="timeline-body"><div class="title">${b.renter_name || 'A tenant'} requested <strong>${b.listing_name}</strong></div><div class="sub">Dates: ${b.start_date} to ${b.end_date} &bull; Payout: ₹${(b.total_amount||0).toLocaleString('en-IN')}</div></div>
+    </div>
+  `).join('');
+}
+
+async function updateStatus(id, status) {
+  if(!confirm(`Are you sure you want to mark this reservation as ${status}?`)) return;
+  try {
+    const res = await fetch(`/api/bookings/${id}/status`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status }) });
+    if(res.ok) { showToast('Reservation status updated.'); await refreshData(); } 
+    else { showToast('Failed to update status.', true); }
+  } catch(e) { showToast('Network error.', true); }
+}
+
+async function deleteSpace(id) {
+  if(!confirm('Permanently delete this property? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`/api/listings/${id}`, { method: 'DELETE' });
+    if(res.ok) { showToast('Property deleted successfully.'); await refreshData(); } 
+    else { showToast('Failed to delete property.', true); }
+  } catch(e) { showToast('Network error.', true); }
+}
+
+function openSpaceModal() {
+  currentEditSpace = null;
+  document.getElementById('space-form').reset();
+  document.getElementById('space-id').value = '';
+  document.getElementById('modal-title').textContent = 'List a New Space';
+  clearImage();
+  existingImages = [];
+  document.getElementById('space-modal').classList.add('open');
+}
+
+function editSpace(id) {
+  currentEditSpace = state.listings.find(l => l.id === id);
+  if(!currentEditSpace) return;
+  
+  document.getElementById('space-form').reset();
+  document.getElementById('modal-title').textContent = 'Edit Property';
+  
+  document.getElementById('space-id').value = currentEditSpace.id;
+  document.getElementById('space-name').value = currentEditSpace.name || '';
+  document.getElementById('space-price').value = currentEditSpace.price || '';
+  document.getElementById('space-location').value = currentEditSpace.location || '';
+  document.getElementById('space-size').value = currentEditSpace.size || 'Medium';
+  document.getElementById('space-badge').value = currentEditSpace.badge || 'House Space';
+  document.getElementById('space-desc').value = currentEditSpace.description || '';
+  
+  // populate previews with existing images (if any)
+  existingImages = Array.isArray(currentEditSpace.images) ? currentEditSpace.images.slice() : (currentEditSpace.image ? [currentEditSpace.image] : []);
+  const previews = document.getElementById('image-previews');
+  previews.innerHTML = '';
+  existingImages.forEach((imgSrc, idx) => {
+    const thumb = document.createElement('div');
+    thumb.style.width = '100px';
+    thumb.style.height = '75px';
+    thumb.style.border = '1px solid var(--border)';
+    thumb.style.borderRadius = '8px';
+    thumb.style.overflow = 'hidden';
+    thumb.style.position = 'relative';
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    thumb.appendChild(img);
+
+    const del = document.createElement('button');
+    del.textContent = '🗑';
+    del.title = 'Remove image';
+    del.style.position = 'absolute';
+    del.style.top = '6px';
+    del.style.right = '6px';
+    del.style.background = 'rgba(0,0,0,0.6)';
+    del.style.color = 'white';
+    del.style.border = 'none';
+    del.style.borderRadius = '50%';
+    del.style.width = '28px';
+    del.style.height = '28px';
+    del.style.cursor = 'pointer';
+    del.onclick = (ev) => { ev.stopPropagation(); deleteExistingImage(currentEditSpace.id, imgSrc); };
+    thumb.appendChild(del);
+
+    previews.appendChild(thumb);
+  });
+
+  const features = currentEditSpace.features || [];
+  document.querySelectorAll('.feat-cb').forEach(cb => { cb.checked = features.includes(cb.value); });
+  document.getElementById('space-modal').classList.add('open');
+}
+
+function closeSpaceModal() { document.getElementById('space-modal').classList.remove('open'); }
+
+function uploadImage(e) {
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  // replace pendingFiles with newly selected ones
+  pendingFiles = files.slice();
+  const previews = document.getElementById('image-previews');
+  // remove only previously rendered pending thumbnails
+  document.querySelectorAll('#image-previews .pending-thumb').forEach(n => n.remove());
+
+  files.forEach((file, idx) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      const thumb = document.createElement('div');
+      thumb.style.width = '100px';
+      thumb.style.height = '75px';
+      thumb.style.border = '1px solid var(--border)';
+      thumb.style.borderRadius = '8px';
+      thumb.style.overflow = 'hidden';
+      thumb.style.position = 'relative';
+      thumb.style.background = '#fff';
+      thumb.classList.add('pending-thumb');
+      thumb.dataset.pendingIndex = idx;
+
+      const img = document.createElement('img');
+      img.src = base64;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      thumb.appendChild(img);
+
+      const del = document.createElement('button');
+      del.textContent = '✕';
+      del.title = 'Remove';
+      del.style.position = 'absolute';
+      del.style.top = '6px';
+      del.style.right = '6px';
+      del.style.background = 'rgba(0,0,0,0.6)';
+      del.style.color = 'white';
+      del.style.border = 'none';
+      del.style.borderRadius = '50%';
+      del.style.width = '22px';
+      del.style.height = '22px';
+      del.style.cursor = 'pointer';
+      del.onclick = (ev) => { ev.stopPropagation(); removePendingFile(idx); };
+      thumb.appendChild(del);
+
+      previews.appendChild(thumb);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function removePendingFile(index) {
+  if (index < 0 || index >= pendingFiles.length) return;
+  pendingFiles.splice(index, 1);
+  // rebuild previews
+  const previews = document.getElementById('image-previews');
+  // clear pending thumbs and re-render existing images + pending thumbnails
+  document.querySelectorAll('#image-previews .pending-thumb').forEach(n => n.remove());
+  // ensure existing images are shown
+  previews.innerHTML = '';
+  existingImages.forEach((imgSrc, idxEx) => {
+    const thumbEx = document.createElement('div');
+    thumbEx.style.width = '100px';
+    thumbEx.style.height = '75px';
+    thumbEx.style.border = '1px solid var(--border)';
+    thumbEx.style.borderRadius = '8px';
+    thumbEx.style.overflow = 'hidden';
+    thumbEx.style.position = 'relative';
+    const imgEx = document.createElement('img');
+    imgEx.src = imgSrc;
+    imgEx.style.width = '100%';
+    imgEx.style.height = '100%';
+    imgEx.style.objectFit = 'cover';
+    thumbEx.appendChild(imgEx);
+    const delEx = document.createElement('button');
+    delEx.textContent = '🗑';
+    delEx.title = 'Remove image';
+    delEx.style.position = 'absolute';
+    delEx.style.top = '6px';
+    delEx.style.right = '6px';
+    delEx.style.background = 'rgba(0,0,0,0.6)';
+    delEx.style.color = 'white';
+    delEx.style.border = 'none';
+    delEx.style.borderRadius = '50%';
+    delEx.style.width = '28px';
+    delEx.style.height = '28px';
+    delEx.style.cursor = 'pointer';
+    delEx.onclick = (ev) => { ev.stopPropagation(); deleteExistingImage(currentEditSpace.id, imgSrc); };
+    thumbEx.appendChild(delEx);
+    previews.appendChild(thumbEx);
+  });
+  pendingFiles.forEach((file, idx) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      const thumb = document.createElement('div');
+      thumb.style.width = '100px';
+      thumb.style.height = '75px';
+      thumb.style.border = '1px solid var(--border)';
+      thumb.style.borderRadius = '8px';
+      thumb.style.overflow = 'hidden';
+      thumb.style.position = 'relative';
+
+      const img = document.createElement('img');
+      img.src = base64;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      thumb.appendChild(img);
+
+      const del = document.createElement('button');
+      del.textContent = '✕';
+      del.title = 'Remove';
+      del.style.position = 'absolute';
+      del.style.top = '6px';
+      del.style.right = '6px';
+      del.style.background = 'rgba(0,0,0,0.6)';
+      del.style.color = 'white';
+      del.style.border = 'none';
+      del.style.borderRadius = '50%';
+      del.style.width = '22px';
+      del.style.height = '22px';
+      del.style.cursor = 'pointer';
+      del.onclick = (ev) => { ev.stopPropagation(); removePendingFile(idx); };
+      thumb.appendChild(del);
+
+      previews.appendChild(thumb);
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('space-image-file').value = '';
+}
+
+function clearImage() {
+  pendingFiles = [];
+  document.getElementById('space-image-file').value = '';
+  document.getElementById('space-image-url').value = '';
+  const previews = document.getElementById('image-previews');
+  previews.innerHTML = '';
+}
+
+async function deleteExistingImage(listingId, url) {
+  if (!confirm('Remove this image from the listing?')) return;
+  try {
+    const res = await fetch(`/api/listings/${listingId}/images`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    if (res.ok) {
+      // remove locally and refresh
+      existingImages = existingImages.filter(u => u !== url);
+      await refreshData();
+      // re-open modal if editing same listing to reflect changes
+      if (currentEditSpace && String(currentEditSpace.id) === String(listingId)) editSpace(listingId);
+      showToast('Image removed.');
+    } else {
+      showToast('Failed to remove image.', true);
+    }
+  } catch (e) { showToast('Network error.', true); }
+}
+
+async function saveSpace(e) {
+  e.preventDefault();
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  
+  const id = document.getElementById('space-id').value;
+  const features = [];
+  document.querySelectorAll('.feat-cb:checked').forEach(cb => features.push(cb.value));
+  
+  const payload = {
+    name: document.getElementById('space-name').value,
+    price: document.getElementById('space-price').value,
+    location: document.getElementById('space-location').value,
+    size: document.getElementById('space-size').value,
+    badge: document.getElementById('space-badge').value,
+    description: document.getElementById('space-desc').value,
+    features: features,
+    available: 1
+  };
+
+  if (currentEditSpace) {
+    payload.images = currentEditSpace.images;
+    payload.tags = currentEditSpace.tags;
+    payload.badgeType = currentEditSpace.badgeType;
+    payload.available = currentEditSpace.available;
+  }
+
+  try {
+    const res = await fetch(id ? `/api/listings/${id}` : '/api/listings', {
+      method: id ? 'PUT' : 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    
+    if (res.ok) {
+      // Get the listing ID (either from edit or from response)
+      let listingId = id;
+      if (!listingId) {
+        const data = await res.json();
+        listingId = data.listing?.id;
+      }
+      
+      // If there are pending files selected, upload them sequentially
+      if (pendingFiles.length > 0) {
+        // helper to upload a single file as base64
+        const uploadFile = (file) => new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = async (ev) => {
+            const base64 = ev.target.result;
+            try {
+              await fetch(`/api/listings/${listingId}/images`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ filename: file.name, data: base64 })
+              });
+            } catch(e) { console.error('Image upload failed:', e); }
+            resolve();
+          };
+          reader.readAsDataURL(file);
+        });
+
+        for (const f of pendingFiles.slice()) {
+          await uploadFile(f);
+        }
+        clearImage();
+        closeSpaceModal();
+        await refreshData();
+        switchTab('spaces');
+        showToast(id ? 'Property updated successfully!' : 'New property published successfully!');
+        btn.disabled = false;
+        btn.textContent = 'Publish Listing';
+      } else {
+        clearImage();
+        closeSpaceModal();
+        await refreshData();
+        switchTab('spaces');
+        showToast(id ? 'Property updated successfully!' : 'New property published successfully!');
+        btn.disabled = false;
+        btn.textContent = 'Publish Listing';
+      }
+    } else { showToast('Failed to save property listing.', true); btn.disabled = false; btn.textContent = 'Publish Listing'; }
+  } catch(err) { showToast('Network error while saving.', true); btn.disabled = false; btn.textContent = 'Publish Listing'; }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+{
+  "nav": {
+    "brandRent": "Rent",
+    "brandWise": "Wise",
+    "links": [
+      { "label": "How it works", "href": "#how-it-works" },
+      { "label": "Browse spaces", "href": "/search" },
+      { "label": "Features", "href": "#features" },
+      { "label": "List your space", "href": "/provider-dashboard" }
+    ],
+    "loginText": "Sign in",
+    "ctaText": "List your space"
+  },
+  "hero": {
+    "badge": "Trusted platform for renters and providers",
+    "headline": "Storage space,",
+    "headlineHighlight": "finally simple.",
+    "subtext": "Find, book, and manage secure storage units near you — in minutes. Whether you're moving, decluttering, or scaling your business.",
+    "searchPlaceholder": "Enter city, neighbourhood, or postal code…",
+    "searchCta": "Find storage →",
+    "searchCapacities": ["Small", "Medium", "Large"],
+    "tags": ["📦 Self-storage", "🚗 Vehicle storage", "🏢 Business units", "❄️ Climate-controlled", "🔒 24/7 Access"]
+  },
+  "howItWorks": {
+    "tag": "Process",
+    "title": "Book a unit in four simple steps",
+    "subtitle": "No paperwork, no queues — everything happens online from start to finish.",
+    "steps": [
+      { "num": "01", "title": "Search & filter", "desc": "Enter your location and set requirements — size, price, and duration — to get matched with verified options nearby." },
+      { "num": "02", "title": "Compare & choose", "desc": "Browse detailed listings with photos, features, availability and transparent pricing. No hidden fees." },
+      { "num": "03", "title": "Book instantly", "desc": "Reserve your unit and pay securely online. Receive instant confirmation and access instructions." },
+      { "num": "04", "title": "Move in & manage", "desc": "Access your space anytime. Track inventory digitally and manage your rental from your dashboard." }
+    ]
+  },
+  "listings": {
+    "tag": "Browse",
+    "title": "Popular spaces near you",
+    "viewAllText": "View all listings →",
+    "items": [
+      {
+        "id": "cms-1",
+        "name": "Secure Basement Storage",
+        "badge": "Verified",
+        "badgeType": "verified",
+        "type": "House Space",
+        "location": "Downtown, Block A",
+        "price": 2500,
+        "size": "Medium",
+        "distance": 2.1,
+        "rating": 4.9,
+        "reviewCount": 38,
+        "image": "/assets/covers/secure-basement-storage.svg",
+        "emoji": "🏪",
+        "features": ["CCTV", "Climate Control", "24/7 Access", "Ground Floor"],
+        "tags": ["100 sq ft", "Ground Floor", "24/7 Access", "CCTV"],
+        "description": "Spacious and secure basement storage unit ideal for urban households and small businesses. Climate-controlled environment keeps your belongings safe year-round. Accessible 24 hours, 7 days a week via digital lock.",
+        "owner": "Sarah J.",
+        "ownerInitials": "SJ",
+        "available": true
+      },
+      {
+        "id": "cms-2",
+        "name": "Covered Garage Space",
+        "badge": "Verified",
+        "badgeType": "verified",
+        "type": "Car Parking",
+        "location": "Westside Residences",
+        "price": 4000,
+        "size": "Large",
+        "distance": 5.0,
+        "rating": 4.9,
+        "reviewCount": 21,
+        "image": "/assets/covers/covered-garage-space.svg",
+        "emoji": "🚗",
+        "features": ["Security Guard", "Gated Entry", "CCTV", "24/7 Access"],
+        "tags": ["500 sq ft", "Covered", "Security Guard", "Gated"],
+        "description": "Premium covered garage with 24/7 security guard and gated entry. Perfect for vehicle storage, large equipment, or business inventory. Loading dock available.",
+        "owner": "Mike T.",
+        "ownerInitials": "MT",
+        "available": true
+      },
+      {
+        "id": "cms-3",
+        "name": "Spare Room Crate Storage",
+        "badge": "Available",
+        "badgeType": "default",
+        "type": "House Space",
+        "location": "North Suburbs",
+        "price": 1200,
+        "size": "Small",
+        "distance": 8.1,
+        "rating": 4.5,
+        "reviewCount": 14,
+        "image": "/assets/covers/spare-room-crate-storage.svg",
+        "emoji": "📦",
+        "features": ["Lockable", "Ground Floor", "Dry Storage"],
+        "tags": ["25 sq ft", "Lockable", "Ground Floor"],
+        "description": "Compact and affordable storage solution in a residential spare room. Clean, dry, and lockable. Ideal for personal items, seasonal equipment, or small inventory.",
+        "owner": "Emily R.",
+        "ownerInitials": "ER",
+        "available": true
+      },
+      {
+        "id": "cms-4",
+        "name": "Climate-Controlled Warehouse Bay",
+        "badge": "Business",
+        "badgeType": "default",
+        "type": "Warehouse",
+        "location": "Ambattur Industrial Estate",
+        "price": 4500,
+        "size": "Large",
+        "distance": 3.8,
+        "rating": 4.8,
+        "reviewCount": 27,
+        "image": "/assets/covers/climate-controlled-warehouse-bay.svg",
+        "emoji": "🏭",
+        "features": ["Climate Control", "Loading Dock", "CCTV", "24/7 Access", "Forklift Access"],
+        "tags": ["500 sq ft", "Climate Control", "Loading Dock", "Forklift"],
+        "description": "Industrial warehouse bay with full climate control, forklift access, and a dedicated loading dock. Perfect for businesses needing reliable, large-scale storage.",
+        "owner": "Venkat S.",
+        "ownerInitials": "VS",
+        "available": true
+      },
+      {
+        "id": "cms-5",
+        "name": "Compact Mini-Storage Locker",
+        "badge": "Verified",
+        "badgeType": "verified",
+        "type": "Locker",
+        "location": "T. Nagar, Chennai",
+        "price": 650,
+        "size": "Small",
+        "distance": 0.6,
+        "rating": 5.0,
+        "reviewCount": 52,
+        "image": "/assets/covers/compact-mini-storage-locker.svg",
+        "emoji": "🔐",
+        "features": ["Digital Lock", "Indoor", "CCTV", "24/7 Access"],
+        "tags": ["25 sq ft", "Digital Lock", "Indoor", "24/7 Access"],
+        "description": "Ultra-affordable mini locker in a secure indoor facility. Perfect for documents, valuables, and personal items. Fully digital access with PIN code.",
+        "owner": "Priya M.",
+        "ownerInitials": "PM",
+        "available": true
+      },
+      {
+        "id": "cms-6",
+        "name": "Commercial Storage Pod",
+        "badge": "Verified",
+        "badgeType": "verified",
+        "type": "Pod Storage",
+        "location": "Porur, Chennai",
+        "price": 3200,
+        "size": "Medium",
+        "distance": 6.2,
+        "rating": 4.7,
+        "reviewCount": 19,
+        "image": "/assets/covers/commercial-storage-pod.svg",
+        "emoji": "📋",
+        "features": ["CCTV", "Vehicle Access", "24/7 Access", "Waterproof"],
+        "tags": ["200 sq ft", "Waterproof", "Vehicle Access", "CCTV"],
+        "description": "Modern commercial storage pod with vehicle access. Waterproof construction, CCTV coverage, and round-the-clock availability. Great for medium-sized businesses.",
+        "owner": "Rajan K.",
+        "ownerInitials": "RK",
+        "available": true
+      }
+    ]
+  },
+  "features": {
+    "tag": "Why RentWise",
+    "title": "Built around trust & convenience",
+    "subtitle": "Every feature is designed so you can store with confidence and complete clarity.",
+    "items": [
+      { "icon": "🛡️", "title": "Verified listings only", "desc": "Every storage provider is vetted before going live. You'll never encounter a ghost listing or unresponsive host." },
+      { "icon": "🔐", "title": "Secure payments", "desc": "All transactions are encrypted and protected. Funds are held securely until move-in is confirmed." },
+      { "icon": "📋", "title": "Digital inventory tracking", "desc": "Log and monitor everything you store with our inventory tool. Know exactly what's in your unit at any time." },
+      { "icon": "⚡", "title": "Instant booking", "desc": "No calls, no waiting. Reserve your unit in minutes and receive your access details immediately." },
+      { "icon": "📍", "title": "Real-time availability", "desc": "Listings are updated in real time. If a unit shows as available, it is — no double-booking frustrations." },
+      { "icon": "💬", "title": "Dedicated support", "desc": "Our customer support team is available 7 days a week to assist with any booking queries." }
+    ]
+  },
+  "testimonials": {
+    "tag": "Reviews",
+    "title": "What our customers say",
+    "items": [
+      { "stars": 5, "text": "Found the perfect unit for my business inventory in under 10 minutes. The whole process — from search to moving in — was seamless.", "name": "Rajan Krishnamurthy", "role": "Small business owner, Chennai", "initials": "RK" },
+      { "stars": 5, "text": "Moving apartments and needed temporary storage. RentWise gave me options I didn't know existed in my neighbourhood. Saved me so much stress.", "name": "Priya Meenakshi", "role": "Resident, Adyar", "initials": "PM" },
+      { "stars": 5, "text": "As a storage provider, RentWise has doubled my occupancy. The platform takes care of everything so I can focus on maintaining quality spaces.", "name": "Venkat Suresh", "role": "Storage provider, Ambattur", "initials": "VS" }
+    ]
+  },
+  "cta": {
+    "tag": "Get started today",
+    "title": "Your perfect storage space is waiting.",
+    "subtitle": "Join thousands of individuals and businesses who've simplified their storage with RentWise.",
+    "primaryText": "Find storage now",
+    "secondaryText": "List your space"
+  },
+  "footer": {
+    "tagline": "Connecting people to safe, affordable storage spaces across India — simply and securely.",
+    "copyright": "© 2025 RentWise. All rights reserved.",
+    "columns": [
+      {
+        "heading": "Renters",
+        "links": [
+          { "label": "Search spaces", "href": "/search" },
+          { "label": "How it works", "href": "/#how-it-works" },
+          { "label": "My dashboard", "href": "/dashboard" },
+          { "label": "Book a unit", "href": "/search" }
+        ]
+      },
+      {
+        "heading": "Providers",
+        "links": [
+          { "label": "List your space", "href": "/provider-dashboard" },
+          { "label": "Provider dashboard", "href": "/provider-dashboard" },
+          { "label": "Manage bookings", "href": "/provider-dashboard" },
+          { "label": "Earnings", "href": "/provider-dashboard" }
+        ]
+      },
+      {
+        "heading": "Company",
+        "links": [
+          { "label": "About RentWise", "href": "#" },
+          { "label": "Blog", "href": "#" },
+          { "label": "Careers", "href": "#" },
+          { "label": "Contact us", "href": "#" }
+        ]
+      }
+    ],
+    "legalLinks": [
+      { "label": "Privacy Policy", "href": "#" },
+      { "label": "Terms of Service", "href": "#" },
+      { "label": "Cookie Policy", "href": "#" }
+    ]
+  }
+}

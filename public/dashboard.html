@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RentWise — User Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/app-shell.css" />
+<style>
+  .dashboard-shell { display: grid; gap: 1.25rem; }
+  .dashboard-hero {
+    padding: 1.75rem;
+    border-radius: 28px;
+    border: 1px solid var(--border);
+    background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,255,255,0.68));
+    box-shadow: var(--shadow);
+  }
+  .dashboard-hero-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .dashboard-kicker { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--red); }
+  .dashboard-title { font-family: 'Outfit', sans-serif; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1; margin: 0.35rem 0 0.6rem; }
+  .dashboard-subtitle { margin: 0; max-width: 72ch; color: var(--muted); line-height: 1.65; }
+  .dashboard-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.9rem; }
+  .stat-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 1.05rem 1.1rem;
+    box-shadow: var(--shadow-soft);
+  }
+  .stat-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+  .stat-value { font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 700; margin-top: 0.3rem; }
+  .stat-note { color: var(--muted); font-size: 0.88rem; margin-top: 0.25rem; }
+  .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.8fr); gap: 1.25rem; align-items: start; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 26px; box-shadow: var(--shadow-soft); overflow: hidden; }
+  .panel-header { padding: 1.15rem 1.2rem 0.35rem; display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+  .panel-header h2 { font-family: 'Outfit', sans-serif; margin: 0; font-size: 1.35rem; }
+  .panel-header p { margin: 0.35rem 0 0; color: var(--muted); }
+  .panel-body { padding: 1.1rem 1.2rem 1.2rem; }
+  .booking-list { display: grid; gap: 0.9rem; }
+  .booking-item {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr) auto;
+    gap: 0.95rem;
+    align-items: stretch;
+    padding: 0.95rem;
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    background: #fff;
+  }
+  .booking-media { position: relative; overflow: hidden; border-radius: 18px; min-height: 110px; background: linear-gradient(135deg, #e2e8f0, #f8fafc); }
+  .booking-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .booking-media .badge { position: absolute; left: 10px; top: 10px; }
+  .booking-main { display: grid; gap: 0.65rem; }
+  .booking-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+  .booking-name { font-family: 'Outfit', sans-serif; font-size: 1.08rem; font-weight: 700; margin: 0; }
+  .booking-sub { color: var(--muted); font-size: 0.92rem; margin-top: 0.2rem; }
+  .booking-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .status-pill {
+    display: inline-flex; align-items: center; padding: 0.35rem 0.65rem; border-radius: 999px;
+    font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    background: rgba(16,24,40,0.06); color: var(--muted);
+  }
+  .status-pill.active { background: rgba(22,130,75,0.12); color: var(--green); }
+  .status-pill.pending { background: rgba(245,158,11,0.16); color: #b45309; }
+  .status-pill.cancelled { background: rgba(211,47,47,0.12); color: var(--red); }
+  .booking-actions { display: flex; flex-direction: column; gap: 0.6rem; justify-content: center; min-width: 120px; }
+  .detail-card { padding: 1.1rem 1.2rem; display: grid; gap: 1rem; }
+  .detail-hero { border-radius: 22px; overflow: hidden; min-height: 210px; background: linear-gradient(135deg, #dbe4f0, #f5f7fb); position: relative; }
+  .detail-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .detail-hero .badge { position: absolute; top: 14px; left: 14px; }
+  .detail-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.9rem 0; border-bottom: 1px solid var(--border); }
+  .detail-row:last-child { border-bottom: 0; }
+  .detail-row span { color: var(--muted); }
+  .timeline { display: grid; gap: 0.75rem; }
+  .timeline-item {
+    display: flex; gap: 0.8rem; align-items: start; padding: 0.85rem; border-radius: 18px; background: #fff; border: 1px solid var(--border);
+  }
+  .timeline-dot { width: 11px; height: 11px; border-radius: 50%; margin-top: 0.3rem; background: var(--red); flex: 0 0 auto; }
+  .timeline-item h4 { margin: 0; font-size: 0.95rem; }
+  .timeline-item p { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.88rem; }
+  .empty-state {
+    padding: 1.5rem; text-align: center; color: var(--muted); border: 1px dashed var(--border-strong); border-radius: 20px; background: rgba(255,255,255,0.7);
+  }
+  @media (max-width: 1000px) {
+    .stats-grid, .dashboard-grid { grid-template-columns: 1fr 1fr; }
+    .booking-item { grid-template-columns: 1fr; }
+    .booking-actions { min-width: 0; flex-direction: row; flex-wrap: wrap; }
+  }
+  @media (max-width: 700px) {
+    .stats-grid, .dashboard-grid { grid-template-columns: 1fr; }
+    .dashboard-hero, .panel-body, .panel-header { padding-left: 1rem; padding-right: 1rem; }
+  }
+</style>
+</head>
+<body>
+<header class="app-topbar">
+  <a class="brand" href="/"><strong>Rent</strong><span>Wise</span></a>
+  <div class="hero-actions">
+    <a class="btn btn-ghost" href="/search">Search spaces</a>
+    <a class="btn btn-dark" href="/booking">Book again</a>
+  </div>
+</header>
+
+<main class="app-shell">
+  <section class="dashboard-shell">
+    <section class="dashboard-hero">
+      <div class="dashboard-hero-top">
+        <div>
+          <div class="dashboard-kicker">User Dashboard</div>
+          <h1 class="dashboard-title">Your rentals, updated from live data.</h1>
+          <p class="dashboard-subtitle">Track bookings, active storage, and payments in one clean workspace. Your dashboard now reads from the same booking records used across the app, so names, dates, and statuses stay in sync.</p>
+        </div>
+        <div class="dashboard-actions">
+          <a class="btn btn-ghost" href="/search">Find another space</a>
+          <a class="btn btn-primary" href="/booking">Make a booking</a>
+        </div>
+      </div>
+      <div class="stats-grid" style="margin-top:1.25rem;">
+        <div class="stat-card"><div class="stat-label">Bookings</div><div class="stat-value" id="kpi-bookings">0</div><div class="stat-note">All reservations in your account</div></div>
+        <div class="stat-card"><div class="stat-label">Active storage</div><div class="stat-value" id="kpi-active">0</div><div class="stat-note">Confirmed or in-use rentals</div></div>
+        <div class="stat-card"><div class="stat-label">Paid this year</div><div class="stat-value" id="kpi-paid">₹0</div><div class="stat-note">Confirmed and completed payments</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" id="kpi-pending">0</div><div class="stat-note">Bookings awaiting approval</div></div>
+      </div>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="panel" id="bookings-panel">
+        <div class="panel-header">
+          <div>
+            <h2>My bookings</h2>
+            <p>Live bookings pulled from your account.</p>
+          </div>
+          <a class="btn btn-outline" href="/search" style="padding:0.7rem 1rem;">Search more</a>
+        </div>
+        <div class="panel-body" id="bookings-list">
+          <div class="empty-state">Loading bookings…</div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <section class="panel" id="storage-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Active storage</h2>
+              <p>Current confirmed rental, if available.</p>
+            </div>
+          </div>
+          <div class="panel-body" id="active-storage">
+            <div class="empty-state">Loading storage details…</div>
+          </div>
+        </section>
+
+        <section class="panel" id="payments-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Payment history</h2>
+              <p>Derived from your booking amounts.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="timeline" id="payments-list">
+              <div class="empty-state">Loading payment history…</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script>
+let currentUser = null;
+let bookings = [];
+let listingCache = new Map();
+
+function money(value) {
+  return `₹${Number(value || 0).toLocaleString('en-IN')}`;
+}
+
+function formatRange(startDate, endDate) {
+  if (!startDate && !endDate) return 'Dates not set';
+  if (startDate && endDate) return `${startDate} - ${endDate}`;
+  return startDate || endDate;
+}
+
+function statusClass(status) {
+  if (status === 'confirmed' || status === 'completed') return 'active';
+  if (status === 'pending') return 'pending';
+  if (status === 'cancelled') return 'cancelled';
+  return '';
+}
+
+async function loadListing(listingId) {
+  if (!listingId) return null;
+  if (listingCache.has(listingId)) return listingCache.get(listingId);
+  try {
+    const res = await fetch(`/api/listings/${encodeURIComponent(listingId)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const listing = data.listing || null;
+    listingCache.set(listingId, listing);
+    return listing;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function loadDashboard() {
+  const sessRes = await fetch('/api/session');
+  const sessData = await sessRes.json();
+  currentUser = sessData.user;
+  if (!currentUser) {
+    window.location.href = '/?login=1';
+    return;
+  }
+
+  const bookingsRes = await fetch('/api/my/bookings');
+  const bookingsData = await bookingsRes.json();
+  bookings = bookingsData.bookings || [];
+
+  const listingIds = [...new Set(bookings.map(b => String(b.listing_id)).filter(Boolean))];
+  await Promise.all(listingIds.map(loadListing));
+
+  renderDashboard();
+}
+
+function renderDashboard() {
+  const sorted = [...bookings].sort((a, b) => {
+    const aDate = new Date(a.created_at || 0).getTime();
+    const bDate = new Date(b.created_at || 0).getTime();
+    return bDate - aDate;
+  });
+
+  const activeBookings = sorted.filter(b => b.status === 'confirmed' || b.status === 'completed');
+  const pendingBookings = sorted.filter(b => b.status === 'pending');
+  const paidThisYear = sorted
+    .filter(b => b.status === 'confirmed' || b.status === 'completed')
+    .reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+
+  document.getElementById('kpi-bookings').textContent = sorted.length;
+  document.getElementById('kpi-active').textContent = activeBookings.length;
+  document.getElementById('kpi-paid').textContent = money(paidThisYear);
+  document.getElementById('kpi-pending').textContent = pendingBookings.length;
+
+  renderBookings(sorted);
+  renderActiveStorage(activeBookings[0] || sorted[0]);
+  renderPayments(sorted);
+}
+
+function renderBookings(items) {
+  const container = document.getElementById('bookings-list');
+  if (!items.length) {
+    container.innerHTML = '<div class="empty-state">No bookings yet. Start by searching for a space.</div>';
+    return;
+  }
+
+  container.innerHTML = `<div class="booking-list">${items.map(item => {
+    const listing = listingCache.get(String(item.listing_id)) || null;
+    const cover = (listing && ((listing.images && listing.images[0]) || listing.image)) || '/assets/covers/compact-mini-storage-locker.svg';
+    const displayName = (listing && listing.name) || item.listing_name || 'Listing';
+    const displayLocation = (listing && listing.location) || 'Location unavailable';
+    const displayPrice = (listing && listing.price) ? money(listing.price) : money(item.total_amount);
+    return `
+      <article class="booking-item">
+        <div class="booking-media">
+          <img src="${cover}" alt="${displayName}" loading="lazy" />
+          <span class="badge ${statusClass(item.status)}">${item.status || 'pending'}</span>
+        </div>
+        <div class="booking-main">
+          <div class="booking-head">
+            <div>
+              <h3 class="booking-name">${displayName}</h3>
+              <div class="booking-sub">${displayLocation}</div>
+            </div>
+            <div style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--red);">${displayPrice}</div>
+          </div>
+          <div class="booking-meta">
+            <span class="tag">${formatRange(item.start_date, item.end_date)}</span>
+            <span class="tag">${item.listing_id}</span>
+            <span class="tag">${item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Recent'}</span>
+          </div>
+          <div class="booking-sub">Booking amount: ${money(item.total_amount)} · Reference stored under your account.</div>
+        </div>
+        <div class="booking-actions">
+          <a class="btn btn-ghost" href="/storage?id=${encodeURIComponent(item.listing_id)}">View details</a>
+          <a class="btn btn-outline" href="/booking">Book again</a>
+        </div>
+      </article>
+    `;
+  }).join('')}</div>`;
+}
+
+function renderActiveStorage(item) {
+  const container = document.getElementById('active-storage');
+  if (!item) {
+    container.innerHTML = '<div class="empty-state">No active storage yet.</div>';
+    return;
+  }
+
+  const listing = listingCache.get(String(item.listing_id)) || null;
+  const cover = (listing && ((listing.images && listing.images[0]) || listing.image)) || '/assets/covers/secure-basement-storage.svg';
+  const name = (listing && listing.name) || item.listing_name || 'Active storage';
+  const location = (listing && listing.location) || 'Location unavailable';
+
+  container.innerHTML = `
+    <div class="detail-card">
+      <div class="detail-hero">
+        <img src="${cover}" alt="${name}" loading="lazy" />
+        <span class="badge ${statusClass(item.status)}">${item.status || 'pending'}</span>
+      </div>
+      <div>
+        <div class="detail-row"><span>Storage</span><strong>${name}</strong></div>
+        <div class="detail-row"><span>Location</span><strong>${location}</strong></div>
+        <div class="detail-row"><span>Rental period</span><strong>${formatRange(item.start_date, item.end_date)}</strong></div>
+        <div class="detail-row"><span>Amount</span><strong>${money(item.total_amount)}</strong></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPayments(items) {
+  const container = document.getElementById('payments-list');
+  if (!items.length) {
+    container.innerHTML = '<div class="empty-state">No payment history yet.</div>';
+    return;
+  }
+
+  container.innerHTML = items.slice(0, 5).map(item => `
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div>
+        <h4>${money(item.total_amount)} · ${item.status || 'pending'}</h4>
+        <p>${item.listing_name || 'Listing'} · ${formatRange(item.start_date, item.end_date)}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+loadDashboard().catch(() => {
+  const bookingsNode = document.getElementById('bookings-list');
+  if (bookingsNode) bookingsNode.innerHTML = '<div class="empty-state">Failed to load dashboard data.</div>';
+});
+</script>
+</body>
+</html>

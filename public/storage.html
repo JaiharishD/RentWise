@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RentWise — Storage Details</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/app-shell.css" />
+</head>
+<body>
+<header class="app-topbar">
+  <a class="brand" href="/"><strong>Rent</strong><span>Wise</span></a>
+  <div class="hero-actions">
+    <a class="btn btn-ghost" href="/search">← Back to results</a>
+    <a class="btn btn-dark" id="book-btn" href="/booking">Book Now</a>
+  </div>
+</header>
+
+<main class="app-shell">
+  <section class="page-hero" id="page-hero">
+    <div class="page-kicker">Storage Detail</div>
+    <h1 class="page-title" id="detail-title">Loading…</h1>
+    <p class="page-subtitle" id="detail-subtitle"></p>
+  </section>
+
+  <section class="section-block detail-grid" id="detail-body" style="display:none;">
+    <!-- Left column -->
+    <div class="stack">
+      <div class="gallery">
+        <div class="gallery-main"><img id="gallery-main" src="" alt="" /></div>
+        <div class="gallery-side">
+          <img id="gallery-side1" src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=600&q=80" alt="" />
+          <img id="gallery-side2" src="https://images.unsplash.com/photo-1560185008-b033106af5b9?auto=format&fit=crop&w=600&q=80" alt="" />
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="section-heading"><h2>Features & amenities</h2></div>
+        <div class="feature-tags" id="detail-features"></div>
+      </div>
+
+      <div class="panel-card">
+        <div class="section-heading"><h2>About this space</h2></div>
+        <p id="detail-description" style="color:var(--muted);line-height:1.7;font-size:0.95rem;"></p>
+      </div>
+
+      <div class="panel-card">
+        <div class="section-heading"><h2>Location</h2></div>
+        <div class="map-box" id="detail-location-box">📍 <span id="detail-location"></span></div>
+        <p class="small" style="margin-top:0.5rem;" id="detail-distance"></p>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="stack">
+      <div class="summary-card">
+        <div class="section-heading"><h2>Price breakdown</h2><p>Transparent monthly costs.</p></div>
+        <div class="summary-row"><span>Base rent</span><strong id="price-base">—</strong></div>
+        <div class="summary-row"><span>Service fee (10%)</span><strong id="price-fee">—</strong></div>
+        <div class="summary-row"><span>Security deposit</span><strong id="price-deposit">—</strong></div>
+        <div class="hr"></div>
+        <div class="summary-row"><span>Monthly total</span><strong id="price-total" style="color:var(--red);font-size:1.1rem;">—</strong></div>
+        <a class="btn btn-primary" id="book-now-btn" href="/booking" style="width:100%;margin-top:1rem;text-decoration:none;display:flex;justify-content:center;">Book this space</a>
+      </div>
+
+      <div class="summary-card">
+        <div class="section-heading"><h2>Key details</h2></div>
+        <div class="summary-row"><span>Size</span><strong id="detail-size">—</strong></div>
+        <div class="summary-row"><span>Type</span><strong id="detail-type">—</strong></div>
+        <div class="summary-row"><span>Rating</span><strong id="detail-rating">—</strong></div>
+        <div class="summary-row"><span>Status</span><strong style="color:var(--green);">Available</strong></div>
+      </div>
+
+      <div class="owner-card">
+        <div class="owner-avatar" id="owner-avatar">?</div>
+        <div class="owner-meta">
+          <div class="name" id="owner-name">—</div>
+          <div class="role" id="owner-meta">Storage provider</div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="section-heading"><h2>Why RentWise?</h2></div>
+        <ul class="list-box" style="list-style:none;padding:0;display:grid;gap:0.5rem;">
+          <li style="display:flex;gap:0.5rem;align-items:flex-start;"><span style="color:var(--green);flex-shrink:0;">✓</span>Verified provider and secure payment</li>
+          <li style="display:flex;gap:0.5rem;align-items:flex-start;"><span style="color:var(--green);flex-shrink:0;">✓</span>Instant booking confirmation</li>
+          <li style="display:flex;gap:0.5rem;align-items:flex-start;"><span style="color:var(--green);flex-shrink:0;">✓</span>Cancel anytime with 24h notice</li>
+          <li style="display:flex;gap:0.5rem;align-items:flex-start;"><span style="color:var(--green);flex-shrink:0;">✓</span>Digital inventory tracking included</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+function money(v) { return `₹${Number(v).toLocaleString('en-IN')}`; }
+
+async function loadListing() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (!id) { window.location.href = '/search'; return; }
+
+  try {
+    const res = await fetch(`/api/listings/${id}`);
+    if (!res.ok) throw new Error('Not found');
+    const { listing } = await res.json();
+
+    // Update page title
+    document.title = `RentWise — ${listing.name}`;
+    document.getElementById('detail-title').textContent = listing.name;
+    document.getElementById('detail-subtitle').textContent = listing.description || `${listing.size} storage unit in ${listing.location}`;
+
+    // Gallery
+    const imgSrc = (listing.images && listing.images[0]) || listing.image || `https://images.unsplash.com/photo-1585421514284-ecb245dd9154?auto=format&fit=crop&w=1200&q=80`;
+    document.getElementById('gallery-main').src = imgSrc;
+    document.getElementById('gallery-main').alt = listing.name;
+
+    // Features
+    const feats = listing.features || listing.tags || [];
+    document.getElementById('detail-features').innerHTML = feats.map(f => `<span class="tag">${f}</span>`).join('');
+
+    // Description
+    document.getElementById('detail-description').textContent = listing.description || 'This is a high-quality storage space available for rent. Contact the provider for more details.';
+
+    // Location
+    document.getElementById('detail-location').textContent = listing.location;
+    if (listing.distance) document.getElementById('detail-distance').textContent = `Approximately ${listing.distance} km from city centre`;
+
+    // Pricing
+    const price = Number(listing.price) || 0;
+    const fee = Math.round(price * 0.1);
+    document.getElementById('price-base').textContent = `${money(price)}/month`;
+    document.getElementById('price-fee').textContent = `${money(fee)}/month`;
+    document.getElementById('price-deposit').textContent = `${money(price * 2)} one-time`;
+    document.getElementById('price-total').textContent = `${money(price + fee)}/month`;
+
+    // Key details
+    document.getElementById('detail-size').textContent = listing.size || '—';
+    document.getElementById('detail-type').textContent = listing.type || 'Storage unit';
+    document.getElementById('detail-rating').textContent = listing.rating ? `${listing.rating} ★ (${listing.reviewCount || 0} reviews)` : 'New listing';
+
+    // Owner
+    const owner = listing.owner || listing.provider_name || 'Storage Provider';
+    const initials = listing.ownerInitials || owner.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('owner-avatar').textContent = initials;
+    document.getElementById('owner-name').textContent = owner;
+    document.getElementById('owner-meta').textContent = `${listing.type || 'Storage provider'} · ${listing.rating ? listing.rating + ' ★' : 'New listing'}`;
+
+    // Book buttons
+    const bookUrl = `/booking?id=${id}`;
+    document.getElementById('book-btn').href = bookUrl;
+    document.getElementById('book-now-btn').href = bookUrl;
+
+    document.getElementById('detail-body').style.display = '';
+  } catch (e) {
+    document.getElementById('detail-title').textContent = 'Listing not found';
+    document.getElementById('detail-subtitle').textContent = 'This listing may have been removed. Browse other spaces below.';
+    document.getElementById('detail-body').innerHTML = `<div class="panel-card" style="grid-column:1/-1;text-align:center;padding:3rem;">
+      <p style="color:var(--muted);margin-bottom:1.5rem;">We couldn't find this listing.</p>
+      <a href="/search" class="btn btn-primary">Browse all listings</a>
+    </div>`;
+    document.getElementById('detail-body').style.display = '';
+  }
+}
+
+loadListing();
+</script>
+</body>
+</html>

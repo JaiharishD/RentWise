@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RentWise — Book Storage</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/app-shell.css" />
+<style>
+  /* ── PAGE LAYOUT ── */
+  .booking-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) 400px;
+    gap: 2rem;
+    align-items: start;
+    margin-top: 1.5rem;
+  }
+
+  /* ── PANELS ── */
+  .bk-panel {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+  .bk-panel-header {
+    padding: 1.4rem 1.5rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .bk-panel-header h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  .bk-panel-header p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+  .bk-panel-body { padding: 1.4rem 1.5rem; display: grid; gap: 1.1rem; }
+
+  /* ── LISTING PREVIEW (right sidebar top card) ── */
+  .listing-preview {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    position: sticky;
+    top: 88px;
+  }
+  .listing-preview-media {
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, #cfd8e6, #eef1f7);
+    position: relative;
+    overflow: hidden;
+  }
+  .listing-preview-media img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .listing-preview-media .no-img {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3.5rem;
+    color: #b0b8c9;
+  }
+  .listing-preview-body { padding: 1.2rem 1.4rem; display: grid; gap: 0.8rem; }
+  .listing-preview-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.15rem; font-weight: 700;
+  }
+  .listing-preview-meta { color: var(--muted); font-size: 0.9rem; display: flex; gap: 0.5rem; align-items: center; }
+  .listing-preview-price {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.6rem; font-weight: 700;
+    color: var(--red);
+    display: flex; align-items: baseline; gap: 0.3rem;
+  }
+  .listing-preview-price span { font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+  .listing-tags { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .listing-tag {
+    display: inline-flex; align-items: center; border-radius: 999px;
+    padding: 0.35rem 0.7rem; font-size: 0.8rem;
+    background: #f5f7fb; color: var(--muted); border: 1px solid var(--border);
+  }
+
+  /* ── DATE PICKER ── */
+  .date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .date-field { display: grid; gap: 0.4rem; }
+  .date-label {
+    font-size: 0.75rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted-2);
+  }
+  .date-input {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+    padding: 0.85rem 1rem;
+    outline: none;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    width: 100%;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .date-input:focus {
+    border-color: rgba(211,47,47,0.5);
+    box-shadow: 0 0 0 4px rgba(211,47,47,0.1);
+  }
+
+  /* Duration pill */
+  .duration-pill {
+    background: rgba(211,47,47,0.07);
+    border: 1px solid rgba(211,47,47,0.18);
+    border-radius: 12px;
+    padding: 0.75rem 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.92rem;
+  }
+  .duration-pill strong { color: var(--red); }
+
+  /* ── PRICE BREAKDOWN ── */
+  .price-breakdown { display: grid; gap: 0; }
+  .price-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+  .price-row:last-child { border-bottom: none; }
+  .price-row strong { color: var(--text); }
+  .price-row.total {
+    padding-top: 1rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .price-row.total strong {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.4rem;
+    color: var(--red);
+  }
+
+  /* ── PAYMENT METHODS ── */
+  .payment-grid { display: grid; gap: 0.75rem; }
+  .payment-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s;
+    position: relative;
+    background: #fff;
+  }
+  .payment-option:hover { border-color: rgba(211,47,47,0.3); background: rgba(211,47,47,0.02); }
+  .payment-option.selected {
+    border-color: var(--red);
+    background: rgba(211,47,47,0.04);
+  }
+  .payment-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .payment-radio {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.18s;
+  }
+  .payment-option.selected .payment-radio {
+    border-color: var(--red);
+  }
+  .payment-radio::after {
+    content: '';
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--red);
+    display: none;
+  }
+  .payment-option.selected .payment-radio::after { display: block; }
+  .payment-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: #f5f7fb;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .payment-info { flex: 1; }
+  .payment-name { font-weight: 600; font-size: 0.97rem; color: var(--text); }
+  .payment-desc { font-size: 0.82rem; color: var(--muted); margin-top: 0.1rem; }
+  .payment-badge {
+    font-size: 0.72rem; font-weight: 700;
+    background: rgba(22,130,75,0.12); color: var(--green);
+    padding: 0.25rem 0.6rem; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+
+  /* Cash instructions */
+  .cash-instructions {
+    display: none;
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    font-size: 0.9rem;
+    color: #92400e;
+    line-height: 1.6;
+    gap: 0.4rem;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+  }
+  .cash-instructions.show { display: grid; }
+  .cash-icon { font-size: 1.3rem; }
+
+  /* ── CONFIRM BUTTON ── */
+  .confirm-btn {
+    width: 100%;
+    padding: 1.1rem;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
+    box-shadow: 0 8px 24px rgba(211,47,47,0.25);
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  }
+  .confirm-btn:hover:not(:disabled) {
+    background: var(--red-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 30px rgba(211,47,47,0.32);
+  }
+  .confirm-btn:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+
+  /* ── TRUST BADGES ── */
+  .trust-row {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    justify-content: center;
+    padding-top: 0.75rem;
+  }
+  .trust-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: var(--muted); }
+  .trust-item svg { flex-shrink: 0; }
+
+  /* ── SUCCESS MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(16,24,40,0.55);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1.5rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .modal-card {
+    background: #fff;
+    border-radius: 28px;
+    box-shadow: 0 24px 64px rgba(16,24,40,0.18);
+    padding: 2.5rem 2rem;
+    max-width: 460px; width: 100%;
+    text-align: center;
+    transform: scale(0.95) translateY(12px);
+    transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .modal-overlay.open .modal-card { transform: scale(1) translateY(0); }
+  .modal-checkmark {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(22,130,75,0.12), rgba(22,130,75,0.06));
+    border: 2px solid rgba(22,130,75,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem;
+    margin: 0 auto 1.5rem;
+  }
+  .modal-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.75rem; font-weight: 700; margin-bottom: 0.6rem;
+  }
+  .modal-sub { color: var(--muted); line-height: 1.6; margin-bottom: 1.75rem; }
+  .modal-details {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1rem 1.25rem;
+    display: grid;
+    gap: 0.6rem;
+    text-align: left;
+    margin-bottom: 1.75rem;
+    font-size: 0.92rem;
+  }
+  .modal-detail-row { display: flex; justify-content: space-between; color: var(--muted); }
+  .modal-detail-row strong { color: var(--text); }
+  .modal-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+
+  /* ── LOADING STATE ── */
+  .skeleton {
+    background: linear-gradient(90deg, #f0f3f7 25%, #e0e5ee 50%, #f0f3f7 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 8px;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* ── STEPS ── */
+  .booking-steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 2rem;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+  }
+  .step-item {
+    flex: 1;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-right: 1px solid var(--border);
+    font-size: 0.88rem;
+  }
+  .step-item:last-child { border-right: none; }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+    transition: background 0.18s, color 0.18s;
+  }
+  .step-item.active .step-num { background: var(--red); color: #fff; }
+  .step-item.done .step-num { background: var(--green); color: #fff; }
+  .step-name { font-weight: 600; color: var(--muted); }
+  .step-item.active .step-name { color: var(--text); }
+
+  /* ── ERROR BANNER ── */
+  .error-banner {
+    display: none;
+    background: rgba(211,47,47,0.06);
+    border: 1px solid rgba(211,47,47,0.2);
+    border-radius: 14px;
+    padding: 0.9rem 1.1rem;
+    color: var(--red);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .error-banner.show { display: block; }
+
+  @media (max-width: 900px) {
+    .booking-shell { grid-template-columns: 1fr; }
+    .listing-preview { position: static; }
+  }
+  @media (max-width: 600px) {
+    .date-grid { grid-template-columns: 1fr; }
+    .booking-steps { flex-direction: column; border-radius: 18px; }
+    .step-item { border-right: none; border-bottom: 1px solid var(--border); }
+    .step-item:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal-card">
+    <div class="modal-checkmark">✓</div>
+    <div class="modal-title">Booking Confirmed!</div>
+    <p class="modal-sub" id="modal-sub-text">Your storage space has been successfully reserved. You'll receive a confirmation shortly.</p>
+    <div class="modal-details" id="modal-details"></div>
+    <div class="modal-actions">
+      <a href="/dashboard" class="btn btn-primary" style="flex:1;justify-content:center;text-decoration:none;">View My Bookings</a>
+      <a href="/search" class="btn btn-ghost" style="flex:1;justify-content:center;text-decoration:none;">Browse More</a>
+    </div>
+  </div>
+</div>
+
+<header class="app-topbar">
+  <a class="brand" href="/"><strong>Rent</strong><span>Wise</span></a>
+  <div class="hero-actions">
+    <a class="btn btn-ghost" id="back-btn" href="/search">← Back</a>
+    <a class="btn btn-dark" href="/dashboard">My Bookings</a>
+  </div>
+</header>
+
+<main class="app-shell">
+  <!-- Page Header -->
+  <section class="page-hero">
+    <div class="page-kicker">Booking & Reservation</div>
+    <h1 class="page-title" id="page-title">Reserve your storage space</h1>
+    <p class="page-subtitle" id="page-subtitle">Select your rental period, choose a payment method, and confirm your booking instantly.</p>
+  </section>
+
+  <!-- Progress Steps -->
+  <div class="booking-steps">
+    <div class="step-item done">
+      <div class="step-num">✓</div>
+      <div class="step-name">Browse &amp; Select</div>
+    </div>
+    <div class="step-item active">
+      <div class="step-num">2</div>
+      <div class="step-name">Booking Details</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-name">Confirmation</div>
+    </div>
+  </div>
+
+  <div class="booking-shell">
+    <!-- LEFT: Booking Form -->
+    <div style="display:grid;gap:1.5rem;">
+
+      <!-- 1. Rental Period -->
+      <div class="bk-panel">
+        <div class="bk-panel-header">
+          <div>
+            <h2>📅 Rental Period</h2>
+            <p>Storage is billed by the month. Choose your start and end date.</p>
+          </div>
+        </div>
+        <div class="bk-panel-body">
+          <div class="date-grid">
+            <div class="date-field">
+              <div class="date-label">Move-in Date</div>
+              <input type="date" class="date-input" id="startDate" />
+            </div>
+            <div class="date-field">
+              <div class="date-label">Move-out Date</div>
+              <input type="date" class="date-input" id="endDate" />
+            </div>
+          </div>
+          <div class="duration-pill" id="durationPill">
+            <span>Select dates to see your rental duration</span>
+            <strong id="durationText">—</strong>
+          </div>
+          <div class="error-banner" id="date-error">Move-out date must be after move-in date.</div>
+        </div>
+      </div>
+
+      <!-- 2. Payment Method -->
+      <div class="bk-panel">
+        <div class="bk-panel-header">
+          <div>
+            <h2>💳 Payment Method</h2>
+            <p>All methods are accepted. Pay securely.</p>
+          </div>
+        </div>
+        <div class="bk-panel-body">
+          <div class="payment-grid">
+            <label class="payment-option" id="opt-razorpay">
+              <input type="radio" name="payment" value="razorpay" checked />
+              <div class="payment-radio"></div>
+              <div class="payment-icon">🏦</div>
+              <div class="payment-info">
+                <div class="payment-name">Razorpay</div>
+                <div class="payment-desc">UPI, Net Banking, Cards &amp; Wallets</div>
+              </div>
+              <span class="payment-badge">Recommended</span>
+            </label>
+
+            <label class="payment-option" id="opt-stripe">
+              <input type="radio" name="payment" value="stripe" />
+              <div class="payment-radio"></div>
+              <div class="payment-icon">💳</div>
+              <div class="payment-info">
+                <div class="payment-name">Stripe</div>
+                <div class="payment-desc">International Cards (Visa, Mastercard, Amex)</div>
+              </div>
+            </label>
+
+            <label class="payment-option" id="opt-cash">
+              <input type="radio" name="payment" value="cash" />
+              <div class="payment-radio"></div>
+              <div class="payment-icon">💵</div>
+              <div class="payment-info">
+                <div class="payment-name">Pay with Cash</div>
+                <div class="payment-desc">Pay the provider directly in cash</div>
+              </div>
+            </label>
+          </div>
+
+          <div class="cash-instructions" id="cashInstructions">
+            <div class="cash-icon">ℹ️</div>
+            <div>
+              <strong>Cash Payment Instructions:</strong><br />
+              Your booking will be marked as <em>pending</em> until the provider confirms receipt of payment. Please coordinate with the provider to hand over cash before or on your move-in date. Carry exact change if possible. A digital receipt will be generated once the provider marks your payment as received.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Cancellation Policy -->
+      <div class="bk-panel">
+        <div class="bk-panel-header">
+          <h2>📋 Booking Policy</h2>
+        </div>
+        <div class="bk-panel-body" style="gap:0.75rem;">
+          <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.93rem;">
+            <span style="color:var(--green);flex-shrink:0;font-size:1rem;">✓</span>
+            <span><strong>Free cancellation</strong> — Cancel anytime before your move-in date for a full refund.</span>
+          </div>
+          <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.93rem;">
+            <span style="color:var(--green);flex-shrink:0;font-size:1rem;">✓</span>
+            <span><strong>Monthly billing</strong> — Pricing shown is per calendar month, not per day.</span>
+          </div>
+          <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.93rem;">
+            <span style="color:var(--green);flex-shrink:0;font-size:1rem;">✓</span>
+            <span><strong>Instant confirmation</strong> — Your space is reserved immediately after payment or booking.</span>
+          </div>
+          <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.93rem;">
+            <span style="color:var(--green);flex-shrink:0;font-size:1rem;">✓</span>
+            <span><strong>Verified provider</strong> — This provider has been verified by RentWise.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Summary + Confirm -->
+    <div style="display:grid;gap:1.25rem;">
+      <!-- Listing Preview Card -->
+      <div class="listing-preview" id="listingPreview">
+        <div class="listing-preview-media">
+          <div class="no-img skeleton" id="preview-media" style="height:220px;"></div>
+        </div>
+        <div class="listing-preview-body">
+          <div class="skeleton" style="height:22px;border-radius:6px;" id="preview-name-skel"></div>
+          <div class="skeleton" style="height:16px;width:60%;border-radius:6px;" id="preview-loc-skel"></div>
+          <div class="listing-preview-price" id="preview-price" style="display:none;">
+            <span id="price-amount">—</span>
+            <span>/ month</span>
+          </div>
+          <div class="listing-tags" id="preview-tags" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Price Summary -->
+      <div class="bk-panel">
+        <div class="bk-panel-header">
+          <h2>Price Summary</h2>
+        </div>
+        <div class="bk-panel-body" style="gap:0;">
+          <div class="price-breakdown">
+            <div class="price-row">
+              <span id="rent-label">₹— × — months</span>
+              <strong id="rent-subtotal">₹—</strong>
+            </div>
+            <div class="price-row">
+              <span>Security deposit (refundable)</span>
+              <strong id="deposit-val">₹—</strong>
+            </div>
+            <div class="price-row">
+              <span>Service fee (10%)</span>
+              <strong id="service-fee-val">₹—</strong>
+            </div>
+            <div class="price-row total">
+              <span>Total due now</span>
+              <strong id="grand-total">₹—</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm CTA -->
+      <div class="bk-panel">
+        <div class="bk-panel-body">
+          <div class="error-banner" id="confirm-error"></div>
+          <button class="confirm-btn" id="confirmBtn" disabled>
+            <span id="confirm-btn-text">Select dates to continue</span>
+          </button>
+          <div class="trust-row">
+            <div class="trust-item">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Secure checkout
+            </div>
+            <div class="trust-item">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Instant booking
+            </div>
+            <div class="trust-item">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              Verified listing
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ──────────────────────────────────────────────────────
+   UTILITIES
+────────────────────────────────────────────────────── */
+function money(v) {
+  return `₹${Number(v || 0).toLocaleString('en-IN')}`;
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/* Calculate whole calendar months between two dates (minimum 1) */
+function calcMonths(start, end) {
+  if (!start || !end) return 0;
+  const years = end.getFullYear() - start.getFullYear();
+  const months = end.getMonth() - start.getMonth();
+  const days = end.getDate() - start.getDate();
+  let total = years * 12 + months;
+  if (days > 0) total += 1; // partial month counts as a whole month
+  return Math.max(1, total);
+}
+
+function pluralize(n, word) {
+  return `${n} ${word}${n !== 1 ? 's' : ''}`;
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function monthFromNow(months = 1) {
+  const d = new Date();
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split('T')[0];
+}
+
+/* ──────────────────────────────────────────────────────
+   STATE
+────────────────────────────────────────────────────── */
+let listing = null;
+let selectedPayment = 'razorpay';
+let months = 0;
+
+/* ──────────────────────────────────────────────────────
+   LOAD LISTING
+────────────────────────────────────────────────────── */
+async function loadListing() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+
+  if (!id) {
+    showFallback('No listing specified. Please go back and select a storage unit.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/listings/${encodeURIComponent(id)}`);
+    if (!res.ok) throw new Error('Not found');
+    const data = await res.json();
+    listing = data.listing;
+    renderListingPreview();
+    document.getElementById('back-btn').href = `/storage?id=${id}`;
+  } catch (e) {
+    showFallback('Could not load this listing. It may have been removed.');
+  }
+}
+
+function renderListingPreview() {
+  if (!listing) return;
+
+  // Images: use provider-uploaded images first, then single image, never Unsplash fallback
+  const images = (listing.images || []).filter(Boolean);
+  const primaryImage = images[0] || listing.image || null;
+
+  const mediaEl = document.getElementById('preview-media');
+  if (primaryImage) {
+    mediaEl.className = ''; // remove skeleton
+    mediaEl.style.height = '220px';
+    mediaEl.style.background = 'none';
+    mediaEl.innerHTML = `<img src="${primaryImage}" alt="${listing.name}" style="width:100%;height:220px;object-fit:cover;display:block;" onerror="this.parentNode.innerHTML='<div class=\\'no-img\\''>📦</div>'" />`;
+  } else {
+    mediaEl.className = 'no-img';
+    mediaEl.style.height = '220px';
+    mediaEl.innerHTML = '📦';
+  }
+
+  // Remove skeletons, show real content
+  document.getElementById('preview-name-skel').remove();
+  document.getElementById('preview-loc-skel').remove();
+
+  // Build preview body
+  const body = document.querySelector('.listing-preview-body');
+  const nameEl = document.createElement('div');
+  nameEl.className = 'listing-preview-name';
+  nameEl.textContent = listing.name;
+
+  const locEl = document.createElement('div');
+  locEl.className = 'listing-preview-meta';
+  locEl.innerHTML = `📍 ${listing.location}${listing.size ? ` · ${listing.size}` : ''}${listing.rating ? ` · <span style="color:var(--red);">★</span> ${listing.rating}` : ''}`;
+
+  body.insertBefore(nameEl, body.firstChild);
+  body.insertBefore(locEl, nameEl.nextSibling);
+
+  // Price
+  document.getElementById('price-amount').textContent = money(listing.price);
+  document.getElementById('preview-price').style.display = 'flex';
+
+  // Tags/features
+  const features = listing.features || listing.tags || [];
+  if (features.length) {
+    const tagsEl = document.getElementById('preview-tags');
+    tagsEl.innerHTML = features.slice(0, 4).map(f => `<span class="listing-tag">${f}</span>`).join('');
+    tagsEl.style.display = 'flex';
+  }
+
+  // Page title
+  document.title = `Book — ${listing.name} · RentWise`;
+  document.getElementById('page-title').textContent = `Reserve: ${listing.name}`;
+  document.getElementById('page-subtitle').textContent = `${listing.location}${listing.size ? ` · ${listing.size}` : ''} · ${money(listing.price)}/month`;
+
+  // Set default dates: today → 1 month from now
+  const startEl = document.getElementById('startDate');
+  const endEl = document.getElementById('endDate');
+  startEl.min = todayStr();
+  endEl.min = todayStr();
+  startEl.value = todayStr();
+  endEl.value = monthFromNow(1);
+
+  updatePricing();
+}
+
+/* ──────────────────────────────────────────────────────
+   PRICING LOGIC (month-based)
+────────────────────────────────────────────────────── */
+function updatePricing() {
+  const startVal = document.getElementById('startDate').value;
+  const endVal = document.getElementById('endDate').value;
+  const start = parseDate(startVal);
+  const end = parseDate(endVal);
+  const dateError = document.getElementById('date-error');
+  const confirmBtn = document.getElementById('confirmBtn');
+  const confirmText = document.getElementById('confirm-btn-text');
+
+  // Validation
+  if (start && end && end <= start) {
+    dateError.classList.add('show');
+    dateError.textContent = 'Move-out date must be after move-in date.';
+    months = 0;
+    resetPricing();
+    confirmBtn.disabled = true;
+    confirmText.textContent = 'Fix date selection to continue';
+    return;
+  }
+  dateError.classList.remove('show');
+
+  if (!start || !end) {
+    months = 0;
+    resetPricing();
+    confirmBtn.disabled = true;
+    confirmText.textContent = 'Select dates to continue';
+    return;
+  }
+
+  months = calcMonths(start, end);
+  const basePrice = Number(listing?.price || 0);
+  const rentSubtotal = basePrice * months;
+  const deposit = basePrice * 2; // 2-month refundable deposit
+  const serviceFee = Math.round(rentSubtotal * 0.10);
+  const total = rentSubtotal + deposit + serviceFee;
+
+  // Duration pill
+  const durationPill = document.getElementById('durationPill');
+  durationPill.querySelector('span').textContent = `Rental duration:`;
+  document.getElementById('durationText').textContent = pluralize(months, 'month');
+
+  // Price rows
+  document.getElementById('rent-label').textContent = `${money(basePrice)} × ${pluralize(months, 'month')}`;
+  document.getElementById('rent-subtotal').textContent = money(rentSubtotal);
+  document.getElementById('deposit-val').textContent = money(deposit);
+  document.getElementById('service-fee-val').textContent = money(serviceFee);
+  document.getElementById('grand-total').textContent = money(total);
+
+  // Enable confirm
+  if (!listing) return;
+  confirmBtn.disabled = false;
+  const payLabel = selectedPayment === 'cash' ? 'Confirm Booking' :
+                   selectedPayment === 'stripe' ? 'Pay with Stripe' : 'Pay with Razorpay';
+  confirmText.textContent = `${payLabel} — ${money(total)}`;
+}
+
+function resetPricing() {
+  document.getElementById('rent-label').textContent = `₹— × — months`;
+  document.getElementById('rent-subtotal').textContent = '₹—';
+  document.getElementById('deposit-val').textContent = '₹—';
+  document.getElementById('service-fee-val').textContent = '₹—';
+  document.getElementById('grand-total').textContent = '₹—';
+  document.getElementById('durationPill').querySelector('span').textContent = 'Select dates to see your rental duration';
+  document.getElementById('durationText').textContent = '—';
+}
+
+/* ──────────────────────────────────────────────────────
+   PAYMENT METHOD SELECTION
+────────────────────────────────────────────────────── */
+function setupPaymentOptions() {
+  document.querySelectorAll('.payment-option input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+      const label = radio.closest('.payment-option');
+      label.classList.add('selected');
+      selectedPayment = radio.value;
+
+      // Show cash instructions
+      const cashInstr = document.getElementById('cashInstructions');
+      if (selectedPayment === 'cash') {
+        cashInstr.classList.add('show');
+      } else {
+        cashInstr.classList.remove('show');
+      }
+      updatePricing();
+    });
+  });
+
+  // Mark first as selected
+  document.getElementById('opt-razorpay').classList.add('selected');
+}
+
+/* ──────────────────────────────────────────────────────
+   CONFIRM & BOOK
+────────────────────────────────────────────────────── */
+async function confirmBooking() {
+  const confirmBtn = document.getElementById('confirmBtn');
+  const errorBanner = document.getElementById('confirm-error');
+  errorBanner.classList.remove('show');
+
+  const startVal = document.getElementById('startDate').value;
+  const endVal = document.getElementById('endDate').value;
+
+  if (!startVal || !endVal || months < 1) {
+    errorBanner.textContent = 'Please select valid dates before confirming.';
+    errorBanner.classList.add('show');
+    return;
+  }
+
+  const basePrice = Number(listing?.price || 0);
+  const rentSubtotal = basePrice * months;
+  const deposit = basePrice * 2;
+  const serviceFee = Math.round(rentSubtotal * 0.10);
+  const total = rentSubtotal + deposit + serviceFee;
+
+  // Payment gateway simulation for online methods
+  if (selectedPayment === 'razorpay') {
+    const confirmed = confirm(
+      `You will be redirected to Razorpay to pay ${money(total)}.\n\nIn a live build, this opens the Razorpay checkout. Click OK to simulate a successful payment.`
+    );
+    if (!confirmed) return;
+  } else if (selectedPayment === 'stripe') {
+    const confirmed = confirm(
+      `You will be redirected to Stripe to pay ${money(total)}.\n\nIn a live build, this opens Stripe Checkout. Click OK to simulate a successful payment.`
+    );
+    if (!confirmed) return;
+  }
+
+  // Disable button, show loading
+  confirmBtn.disabled = true;
+  document.getElementById('confirm-btn-text').textContent = 'Creating your booking…';
+
+  try {
+    const res = await fetch('/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        listing_id: listing.id,
+        listing_name: listing.name,
+        start_date: startVal,
+        end_date: endVal,
+        total_amount: total,
+        payment_method: selectedPayment
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Booking failed');
+    }
+
+    const { booking } = await res.json();
+    showSuccessModal(booking, total, startVal, endVal, months);
+
+  } catch (e) {
+    errorBanner.textContent = e.message || 'Something went wrong. Please try again.';
+    errorBanner.classList.add('show');
+    confirmBtn.disabled = false;
+    updatePricing(); // restore button text
+  }
+}
+
+/* ──────────────────────────────────────────────────────
+   SUCCESS MODAL
+────────────────────────────────────────────────────── */
+function showSuccessModal(booking, total, startDate, endDate, numMonths) {
+  const paymentLabels = { razorpay: 'Razorpay', stripe: 'Stripe', cash: 'Cash (Pending)' };
+  const statusLabels = { cash: 'Pending — awaiting cash payment', default: 'Confirmed' };
+  const bookingStatus = selectedPayment === 'cash' ? 'Pending — awaiting cash payment' : 'Confirmed';
+
+  document.getElementById('modal-sub-text').textContent =
+    selectedPayment === 'cash'
+      ? 'Your booking is created and pending. Please hand cash to the provider on or before your move-in date.'
+      : 'Your payment was processed successfully. Your storage space is now reserved.';
+
+  document.getElementById('modal-details').innerHTML = `
+    <div class="modal-detail-row"><span>Booking ID</span><strong>#${booking.id || '—'}</strong></div>
+    <div class="modal-detail-row"><span>Space</span><strong>${listing.name}</strong></div>
+    <div class="modal-detail-row"><span>Location</span><strong>${listing.location}</strong></div>
+    <div class="modal-detail-row"><span>Move-in</span><strong>${startDate}</strong></div>
+    <div class="modal-detail-row"><span>Move-out</span><strong>${endDate}</strong></div>
+    <div class="modal-detail-row"><span>Duration</span><strong>${pluralize(numMonths, 'month')}</strong></div>
+    <div class="modal-detail-row"><span>Payment</span><strong>${paymentLabels[selectedPayment] || selectedPayment}</strong></div>
+    <div class="modal-detail-row"><span>Total Paid</span><strong style="color:var(--red);">${money(total)}</strong></div>
+    <div class="modal-detail-row"><span>Status</span><strong style="color:${selectedPayment === 'cash' ? '#b45309' : 'var(--green)'};">${bookingStatus}</strong></div>
+  `;
+
+  // Advance the progress steps
+  document.querySelectorAll('.step-item').forEach((s, i) => {
+    s.classList.remove('active', 'done');
+    if (i < 2) s.classList.add('done');
+    else s.classList.add('active');
+    const num = s.querySelector('.step-num');
+    if (i < 2) num.textContent = '✓';
+  });
+
+  document.getElementById('successModal').classList.add('open');
+}
+
+/* ──────────────────────────────────────────────────────
+   ERROR FALLBACK
+────────────────────────────────────────────────────── */
+function showFallback(msg) {
+  document.getElementById('page-title').textContent = 'Booking Unavailable';
+  document.getElementById('page-subtitle').textContent = msg;
+  document.getElementById('confirmBtn').disabled = true;
+  document.getElementById('confirm-btn-text').textContent = 'Unavailable';
+}
+
+/* ──────────────────────────────────────────────────────
+   INIT
+────────────────────────────────────────────────────── */
+async function init() {
+  // Load session — redirect if not logged in
+  try {
+    const sessRes = await fetch('/api/session');
+    const { user } = await sessRes.json();
+    if (!user) {
+      window.location.href = '/?login=1';
+      return;
+    }
+  } catch (e) {
+    // If session check fails, continue (server will enforce auth)
+  }
+
+  setupPaymentOptions();
+  await loadListing();
+
+  // Date change events
+  document.getElementById('startDate').addEventListener('change', () => {
+    // Auto-advance end date to be at least 1 month ahead
+    const start = parseDate(document.getElementById('startDate').value);
+    const end = parseDate(document.getElementById('endDate').value);
+    if (start && (!end || end <= start)) {
+      const next = new Date(start);
+      next.setMonth(next.getMonth() + 1);
+      document.getElementById('endDate').value = next.toISOString().split('T')[0];
+    }
+    document.getElementById('endDate').min = document.getElementById('startDate').value;
+    updatePricing();
+  });
+
+  document.getElementById('endDate').addEventListener('change', updatePricing);
+
+  // Confirm
+  document.getElementById('confirmBtn').addEventListener('click', confirmBooking);
+
+  // Close modal on backdrop click
+  document.getElementById('successModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+}
+
+init();
+</script>
+</body>
+</html>

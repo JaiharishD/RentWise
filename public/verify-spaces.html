@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verify Listings — RentWise Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #d32f2f; --success: #1d7a3a; --warning: #f59e0b; --danger: #dc2626;
+      --bg: #ffffff; --surface: #f9fafb; --border: #e5e7eb; --text: #111827; --muted: #6b7280;
+      --radius: 8px; --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text); line-height: 1.6; }
+    a { color: var(--primary); text-decoration: none; }
+    
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 1.875rem; font-weight: 700; }
+    .auth-section { padding: 1.5rem; background: var(--bg); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 2rem; display: none; }
+    .auth-section.show { display: block; }
+    .auth-input { width: 100%; max-width: 300px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px; margin-right: 0.5rem; }
+    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #b71c1c; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #15803d; }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-warning:hover { background: #d97706; }
+    .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+    
+    .filter-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .filter-btn { padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--bg); border-radius: 4px; cursor: pointer; transition: 0.2s; }
+    .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    
+    .listing { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem; display: grid; grid-template-columns: 200px 1fr 180px; }
+    .listing-image { height: 200px; background: #f3f4f6; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .listing-image img { width: 100%; height: 100%; object-fit: cover; }
+    .listing-body { padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; }
+    .listing-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; }
+    .listing-title { font-size: 1.125rem; font-weight: 600; }
+    .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+    .badge-verified { background: #d1fae5; color: var(--success); }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .listing-meta { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
+    .meta-item { display: flex; gap: 0.5rem; font-size: 0.9rem; color: var(--muted); }
+    .listing-images { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .thumb { width: 60px; height: 45px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .listing-actions { padding: 1.5rem; border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.75rem; justify-content: center; }
+    .action-btn { width: 100%; padding: 0.75rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; transition: 0.2s; font-size: 0.875rem; }
+    .approve-btn { background: var(--success); color: white; }
+    .approve-btn:hover { background: #15803d; }
+    .reject-btn { background: var(--danger); color: white; }
+    .reject-btn:hover { background: #991b1b; }
+    
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--bg); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); }
+    .stat-label { color: var(--muted); font-size: 0.875rem; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 1.875rem; font-weight: 700; }
+    
+    .empty { text-align: center; padding: 2rem; color: var(--muted); }
+    .loading { text-align: center; padding: 2rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <h1>Verify Listings</h1>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0.25rem;">Review and approve provider listings</p>
+    </div>
+    <button class="btn btn-primary" onclick="showAuthPrompt()" id="auth-btn" style="display:none;">Unlock</button>
+  </div>
+
+  <div class="auth-section" id="auth-section">
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <input type="password" class="auth-input" id="token-input" placeholder="Enter verification token…" />
+      <button class="btn btn-primary" onclick="authenticate()">Unlock Dashboard</button>
+    </div>
+  </div>
+
+  <div id="content" style="display: none;">
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Total Listings</div>
+        <div class="stat-value" id="total-count">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Verified</div>
+        <div class="stat-value" id="verified-count" style="color: var(--success);">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending Review</div>
+        <div class="stat-value" id="pending-count" style="color: var(--warning);">0</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterListings('all')">All</button>
+      <button class="filter-btn" onclick="filterListings('pending')">Pending</button>
+      <button class="filter-btn" onclick="filterListings('verified')">Verified</button>
+    </div>
+
+    <div id="listings-container" class="loading">Loading listings…</div>
+  </div>
+</div>
+
+<script>
+let allListings = [];
+let currentFilter = 'all';
+let authToken = localStorage.getItem('verify-token') || '';
+
+async function authenticate() {
+  const token = document.getElementById('token-input').value.trim();
+  if (!token) { alert('Please enter a token'); return; }
+  try {
+    const res = await fetch(`/api/verify/listings?token=${encodeURIComponent(token)}`);
+    if (!res.ok) throw new Error('Invalid token');
+    localStorage.setItem('verify-token', token);
+    authToken = token;
+    loadListings();
+  } catch(e) { alert('Authentication failed. Check your token.'); }
+}
+
+function showAuthPrompt() {
+  const section = document.getElementById('auth-section');
+  section.classList.add('show');
+  document.getElementById('token-input').focus();
+}
+
+async function loadListings() {
+  if (!authToken) { 
+    document.getElementById('auth-section').classList.add('show');
+    document.getElementById('auth-btn').style.display = 'block';
+    return;
+  }
+  try {
+    const res = await fetch(`/api/verify/listings?token=${encodeURIComponent(authToken)}`);
+    if (!res.ok) { localStorage.removeItem('verify-token'); authToken = ''; showAuthPrompt(); return; }
+    const { listings } = await res.json();
+    allListings = listings;
+    document.getElementById('auth-section').classList.remove('show');
+    document.getElementById('content').style.display = 'block';
+    updateStats();
+    renderListings();
+  } catch(e) { console.error('Failed to load listings'); }
+}
+
+function updateStats() {
+  const total = allListings.length;
+  const verified = allListings.filter(l => l.verified).length;
+  const pending = total - verified;
+  document.getElementById('total-count').textContent = total;
+  document.getElementById('verified-count').textContent = verified;
+  document.getElementById('pending-count').textContent = pending;
+}
+
+function filterListings(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderListings();
+}
+
+function renderListings() {
+  const container = document.getElementById('listings-container');
+  let filtered = allListings;
+  if (currentFilter === 'verified') filtered = allListings.filter(l => l.verified);
+  if (currentFilter === 'pending') filtered = allListings.filter(l => !l.verified);
+  
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty">No listings to display.</div>';
+    return;
+  }
+  
+  container.innerHTML = filtered.map(l => `
+    <div class="listing">
+      <div class="listing-image">
+        ${(l.images && l.images[0]) ? `<img src="${l.images[0]}" alt="${l.name}">` : (l.image ? `<img src="${l.image}">` : '<div style="color:#d1d5db;">📦</div>')}
+      </div>
+      <div class="listing-body">
+        <div>
+          <div class="listing-header">
+            <div class="listing-title">${l.name}</div>
+            <span class="badge ${l.verified ? 'badge-verified' : 'badge-pending'}">${l.verified ? 'Verified' : 'Pending'}</span>
+          </div>
+          <div class="listing-meta">
+            <div class="meta-item">📍 ${l.location}</div>
+            <div class="meta-item">💰 ₹${Number(l.price).toLocaleString('en-IN')}/month</div>
+            <div class="meta-item">📏 ${l.size}</div>
+            <div class="meta-item">👤 ${l.provider_name || 'Unknown provider'}</div>
+          </div>
+          <div style="font-size: 0.875rem; color: var(--muted); line-height: 1.5; margin-bottom: 0.5rem;">${l.description || '—'}</div>
+          ${l.images && l.images.length > 0 ? `
+            <div class="listing-images">
+              ${l.images.map(img => `<div class="thumb"><img src="${img}" alt=""></div>`).join('')}
+            </div>
+          ` : ''}
+          ${l.features && l.features.length > 0 ? `
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;">
+              ${l.features.map(f => `<span style="display:inline-block; padding:0.25rem 0.5rem; background:#f0fdf4; color:var(--success); border-radius:4px; font-size:0.75rem;">${f}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      <div class="listing-actions">
+        ${!l.verified ? `
+          <button class="action-btn approve-btn" onclick="approveSpace(${l.id})">✓ Approve</button>
+          <button class="action-btn reject-btn" onclick="rejectSpace(${l.id})">✗ Reject</button>
+        ` : `
+          <button class="action-btn reject-btn" onclick="rejectSpace(${l.id})">Unverify</button>
+        `}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function approveSpace(id) {
+  if (!confirm('Approve this listing?')) return;
+  try {
+    const res = await fetch(`/api/verify/listings/${id}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: authToken })
+    });
+    if (res.ok) { await loadListings(); } else { alert('Failed to approve'); }
+  } catch(e) { alert('Error'); }
+}
+
+async function rejectSpace(id) {
+  if (!confirm('Reject/unverify this listing?')) return;
+  try {
+    const res = await fetch(`/api/verify/listings/${id}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: authToken })
+    });
+    if (res.ok) { await loadListings(); } else { alert('Failed to reject'); }
+  } catch(e) { alert('Error'); }
+}
+
+loadListings();
+</script>
+</body>
+</html>

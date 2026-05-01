@@ -1,0 +1,46 @@
+{
+  "listings": [
+    {
+      "id": "1",
+      "type": "House Space",
+      "name": "Secure Basement Storage",
+      "price": 2500,
+      "location": "Downtown, Block A",
+      "distance": "2.5 km",
+      "size": "Medium",
+      "features": ["Climate Control", "24/7 Access", "CCTV"],
+      "owner": "Sarah J.",
+      "verified": true,
+      "image": "https://images.unsplash.com/photo-1585421514284-ecb245dd9154?auto=format&fit=crop&w=600&q=80",
+      "rating": 4.8
+    },
+    {
+      "id": "2",
+      "type": "Car Parking",
+      "name": "Covered Garage Space",
+      "price": 4000,
+      "location": "Westside Residences",
+      "distance": "5.0 km",
+      "size": "Large",
+      "features": ["Security Guard", "Gated Entry"],
+      "owner": "Mike T.",
+      "verified": true,
+      "image": "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?auto=format&fit=crop&w=600&q=80",
+      "rating": 4.9
+    },
+    {
+      "id": "3",
+      "type": "House Space",
+      "name": "Spare Room Crate Storage",
+      "price": 1200,
+      "location": "North Suburbs",
+      "distance": "8.1 km",
+      "size": "Small",
+      "features": ["Lockable", "Ground Floor"],
+      "owner": "Emily R.",
+      "verified": false,
+      "image": "https://images.unsplash.com/photo-1622473484439-b9d5c3cb941e?auto=format&fit=crop&w=600&q=80",
+      "rating": 4.5
+    }
+  ]
+}

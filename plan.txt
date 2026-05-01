@@ -1,0 +1,59 @@
+1) index page :
+- current hero section looks good
+- Location (city/pincode)
+- Storage size (small / medium / large)
+- Duration (days/months)
+- Price range slider
+- Featured Storage Listings
+- Reviews/Testimonial section
+- “Why RentWise?” (secure, verified, digital booking)
+- Call-to-action buttons:
+   “Find Storage”
+   “List Your Space”
+
+2) Search Results Page
+
+Like Airbnb/Booking UI
+
+Filters (left sidebar):
+Price
+Size
+Distance
+Features (CCTV, climate control, etc.)
+Results (right side):
+Card layout:
+Image
+Price/month
+Location
+Rating
+“View Details”
+
+3) Storage Detail Page
+
+Decision-making page
+
+Image gallery
+Price breakdown
+Availability calendar
+Features list
+Map location
+Owner details (verified badge)
+“Book Now” button
+
+4)Booking + Payment Page
+Date selection
+Total price calculation
+Payment gateway (Razorpay/Stripe)
+Confirmation screen
+
+5) User Dashboard
+My bookings
+Active storage
+Payment history
+Inventory tracking (optional feature)
+
+6) Provider Dashboard
+Add/Edit listings
+View bookings
+Earnings analytics
+Availability control

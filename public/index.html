@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RentWise — Smart Storage, Simplified</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-white: #ffffff; --text-black: #111111; --text-gray: #4a4a4a; --text-light: #7a7a7a;
+    --primary-red: #d32f2f; --dark-red: #9a0007; --light-gray: #f7f7f7; --border-gray: #e0e0e0;
+    --font-display: 'Outfit', sans-serif; --font-body: 'Inter', sans-serif;
+    --radius: 8px; --radius-sm: 4px; --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08); --shadow-lg: 0 12px 32px rgba(0,0,0,0.12); --transition: 0.2s ease-in-out;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font-body); background: var(--bg-white); color: var(--text-black); line-height: 1.6; }
+
+  #page-loader { position: fixed; inset: 0; background: var(--bg-white); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s; }
+  #page-loader.hidden { opacity: 0; pointer-events: none; }
+  .loader-logo { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; }
+  .loader-logo span { color: var(--primary-red); }
+  .loader-dot { animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 5%; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border-gray); transition: box-shadow var(--transition); }
+  nav.scrolled { box-shadow: var(--shadow-sm); }
+  .nav-logo { display: flex; align-items: baseline; gap: 2px; text-decoration: none; }
+  .nav-logo-rent { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; color: var(--text-black); }
+  .nav-logo-wise { font-family: var(--font-display); font-size: 1.75rem; font-weight: 400; color: var(--primary-red); }
+  .nav-links { display: flex; align-items: center; gap: 2.5rem; list-style: none; }
+  .nav-links a { text-decoration: none; font-size: 0.9rem; font-weight: 500; color: var(--text-gray); transition: color var(--transition); }
+  .nav-links a:hover { color: var(--primary-red); }
+  .nav-cta { display: flex; align-items: center; gap: 1rem; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-body); font-size: 0.9rem; font-weight: 500; border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); padding: 0.6rem 1.4rem; text-decoration: none; border: none; }
+  .btn-ghost { background: transparent; border: 1px solid transparent; color: var(--text-black); }
+  .btn-ghost:hover { background: var(--light-gray); }
+  .btn-primary { background: var(--primary-red); color: var(--bg-white); border: 1px solid var(--primary-red); }
+  .btn-primary:hover { background: var(--dark-red); border-color: var(--dark-red); }
+  .btn-outline { background: transparent; color: var(--text-black); border: 1px solid var(--text-black); }
+  .btn-outline:hover { background: var(--text-black); color: var(--bg-white); }
+  .btn-white { background: var(--bg-white); color: var(--text-black); border: 1px solid var(--bg-white); }
+  .btn-white:hover { background: var(--light-gray); }
+
+  /* ── MODAL ── */
+  .modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(17,17,17,0.55); backdrop-filter: blur(8px); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+  .modal.open { opacity: 1; pointer-events: auto; }
+  .modal-card { width: min(100%, 460px); background: var(--bg-white); border-radius: 20px; border: 1px solid var(--border-gray); box-shadow: var(--shadow-lg); overflow: hidden; transform: translateY(16px) scale(0.98); transition: transform 0.25s ease; }
+  .modal.open .modal-card { transform: translateY(0) scale(1); }
+  .modal-header { display: flex; justify-content: space-between; align-items: start; gap: 1rem; padding: 1.5rem 1.5rem 0; }
+  .modal-title { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; }
+  .modal-subtitle { font-size: 0.9rem; color: var(--text-gray); margin-top: 0.25rem; }
+  .modal-close { border: none; background: var(--light-gray); color: var(--text-black); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; flex-shrink: 0; }
+  .modal-tabs { display: flex; gap: 0; padding: 1rem 1.5rem 0; border-bottom: 1px solid var(--border-gray); }
+  .modal-tab { padding: 0.6rem 1rem; font-size: 0.9rem; font-weight: 500; color: var(--text-light); cursor: pointer; border-bottom: 2px solid transparent; transition: all var(--transition); background: none; border-top: none; border-left: none; border-right: none; }
+  .modal-tab.active { color: var(--primary-red); border-bottom-color: var(--primary-red); }
+  .modal-body { padding: 1.5rem; }
+  .modal-form { display: grid; gap: 1rem; }
+  .modal-panel { display: none; }
+  .modal-panel.active { display: block; }
+  .field { display: grid; gap: 0.5rem; }
+  .field label { font-size: 0.88rem; font-weight: 600; color: var(--text-black); }
+  .field input, .field select { width: 100%; border: 1px solid var(--border-gray); border-radius: 10px; padding: 0.75rem 1rem; font-family: var(--font-body); font-size: 0.95rem; color: var(--text-black); outline: none; background: var(--bg-white); transition: border-color var(--transition), box-shadow var(--transition); }
+  .field input:focus, .field select:focus { border-color: var(--primary-red); box-shadow: 0 0 0 4px rgba(211,47,47,0.1); }
+  .modal-actions { margin-top: 0.5rem; }
+  .modal-status { min-height: 1.2rem; font-size: 0.88rem; color: var(--text-light); margin-bottom: 0.5rem; }
+  .modal-status.error { color: var(--primary-red); }
+  .modal-status.success { color: #1d7a3a; }
+  .modal-divider { text-align: center; font-size: 0.8rem; color: var(--text-light); margin: 0.25rem 0; }
+
+  /* ── HERO ── */
+  .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 8rem 5% 4rem; position: relative; overflow: hidden; background: var(--bg-white); }
+  #diagram-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.55; pointer-events: none; }
+  .hero-inner { max-width: 1100px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--text-black); color: var(--bg-white); padding: 0.4rem 1rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2rem; }
+  .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--primary-red); }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(3rem, 6vw, 5.5rem); font-weight: 700; line-height: 1.1; color: var(--text-black); letter-spacing: -1px; max-width: 16ch; }
+  .hero h1 span { color: var(--primary-red); }
+  .hero-sub { font-size: 1.125rem; color: var(--text-gray); max-width: 50ch; margin: 1.5rem 0 2.5rem; line-height: 1.6; }
+  .hero-search-shell { background: var(--bg-white); border-radius: var(--radius); box-shadow: var(--shadow-lg); border: 1px solid var(--border-gray); padding: 1.25rem; max-width: 700px; display: grid; gap: 1rem; }
+  .hero-search-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0.75rem; }
+  .hero-search-field { display: grid; gap: 0.4rem; }
+  .hero-search-field label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); }
+  .hero-search-field input, .hero-search-field select { width: 100%; border: 1px solid var(--border-gray); border-radius: 10px; padding: 0.75rem 0.9rem; font-family: var(--font-body); font-size: 0.95rem; color: var(--text-black); outline: none; }
+  .hero-search-field input:focus, .hero-search-field select:focus { border-color: var(--primary-red); box-shadow: 0 0 0 3px rgba(211,47,47,0.08); }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+  .hero-tag { font-size: 0.8rem; font-weight: 500; color: var(--text-gray); background: var(--light-gray); border: 1px solid var(--border-gray); padding: 0.4rem 1rem; border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
+  .hero-tag:hover { border-color: var(--text-black); color: var(--text-black); background: var(--bg-white); }
+
+  section { padding: 6rem 5%; }
+  .section-inner { max-width: 1100px; margin: 0 auto; }
+  .section-tag { font-family: var(--font-display); font-size: 0.85rem; font-weight: 600; color: var(--primary-red); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; display: block; }
+  .section-title { font-family: var(--font-display); font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 700; color: var(--text-black); line-height: 1.2; letter-spacing: -0.5px; }
+  .section-sub { font-size: 1.05rem; color: var(--text-gray); max-width: 55ch; margin-top: 1rem; line-height: 1.6; }
+
+  #how-it-works { background: var(--light-gray); border-top: 1px solid var(--border-gray); border-bottom: 1px solid var(--border-gray); }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 3rem; margin-top: 4rem; }
+  .step-num { font-family: var(--font-display); font-size: 3.5rem; font-weight: 700; color: var(--border-gray); line-height: 1; margin-bottom: 1rem; transition: color var(--transition); }
+  .step:hover .step-num { color: var(--primary-red); }
+  .step h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.6rem; }
+  .step p { font-size: 0.92rem; color: var(--text-gray); }
+
+  .listings-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem; }
+  .listings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem; }
+  .listing-card { background: var(--bg-white); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border-gray); transition: all var(--transition); cursor: pointer; text-decoration: none; color: inherit; display: block; }
+  .listing-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--text-black); }
+  .listing-img { height: 200px; background: var(--light-gray); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+  .listing-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .listing-badge { position: absolute; top: 12px; left: 12px; background: var(--text-black); color: var(--bg-white); font-size: 0.72rem; font-weight: 600; padding: 0.3rem 0.75rem; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 1; }
+  .listing-badge.verified { background: var(--primary-red); }
+  .listing-body { padding: 1.25rem; }
+  .listing-meta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.35rem; }
+  .listing-name { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; }
+  .listing-price { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--primary-red); }
+  .listing-price span { font-family: var(--font-body); font-size: 0.78rem; font-weight: 400; color: var(--text-light); }
+  .listing-location { font-size: 0.82rem; color: var(--text-gray); margin-bottom: 0.85rem; }
+  .listing-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .listing-tag { font-size: 0.72rem; font-weight: 500; padding: 0.25rem 0.6rem; border-radius: 2px; background: var(--light-gray); color: var(--text-gray); border: 1px solid var(--border-gray); }
+
+  .red-panel { background: var(--primary-red); color: var(--bg-white); }
+  .red-panel .section-title { color: var(--bg-white); }
+  .red-panel .section-tag { color: #ffb3b3; }
+  .red-panel .section-sub { color: rgba(255,255,255,0.8); }
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 4rem; }
+  .feature-card { padding: 2rem; background: rgba(0,0,0,0.15); border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.1); }
+  .feature-icon { font-size: 2rem; margin-bottom: 1rem; display: block; }
+  .feature-card h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.6rem; }
+  .feature-card p { font-size: 0.9rem; color: rgba(255,255,255,0.8); }
+
+  .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 4rem; }
+  .testimonial-card { background: var(--bg-white); border-radius: var(--radius); padding: 2rem; border: 1px solid var(--border-gray); }
+  .testimonial-stars { color: var(--primary-red); font-size: 1rem; margin-bottom: 1rem; }
+  .testimonial-text { font-size: 1rem; color: var(--text-black); line-height: 1.7; margin-bottom: 1.5rem; }
+  .testimonial-author { display: flex; align-items: center; gap: 1rem; border-top: 1px solid var(--border-gray); padding-top: 1rem; }
+  .author-avatar { width: 44px; height: 44px; border-radius: var(--radius-sm); background: var(--text-black); color: var(--bg-white); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 600; font-size: 0.85rem; flex-shrink: 0; }
+  .author-name { font-weight: 600; font-size: 0.9rem; }
+  .author-role { font-size: 0.82rem; color: var(--text-gray); }
+
+  .cta-section { text-align: center; }
+  .cta-section .section-title { font-size: clamp(2.2rem, 4vw, 3.5rem); margin: 0 auto; }
+  .cta-section .section-sub { margin: 1.5rem auto 3rem; }
+  .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+  footer { background: var(--text-black); color: var(--bg-white); padding: 5rem 5% 2rem; }
+  .footer-inner { max-width: 1100px; margin: 0 auto; }
+  .footer-top { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 4rem; margin-bottom: 4rem; }
+  .footer-brand p { font-size: 0.9rem; color: rgba(255,255,255,0.55); margin-top: 1.25rem; max-width: 28ch; line-height: 1.65; }
+  .footer-col h4 { font-family: var(--font-display); font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.25rem; }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 0.65rem; }
+  .footer-col a { text-decoration: none; font-size: 0.88rem; color: rgba(255,255,255,0.55); transition: color var(--transition); }
+  .footer-col a:hover { color: var(--primary-red); }
+  .footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+  .footer-bottom p { font-size: 0.82rem; color: rgba(255,255,255,0.4); }
+
+  .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+  .fade-delay-1 { transition-delay: 0.1s; }
+  .fade-delay-2 { transition-delay: 0.2s; }
+
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .footer-top { grid-template-columns: 1fr 1fr; }
+    .hero-search-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="page-loader"><div class="loader-logo">Rent<span>Wise</span><span class="loader-dot">.</span></div></div>
+
+<nav id="nav"></nav>
+
+<section class="hero">
+  <canvas id="diagram-canvas"></canvas>
+  <div class="hero-inner" id="hero-content"></div>
+</section>
+
+<section id="how-it-works">
+  <div class="section-inner" id="how-it-works-content"></div>
+</section>
+
+<section id="listings">
+  <div class="section-inner" id="listings-content"></div>
+</section>
+
+<section id="features" class="red-panel">
+  <div class="section-inner" id="features-content"></div>
+</section>
+
+<section>
+  <div class="section-inner" id="testimonials-content"></div>
+</section>
+
+<section class="red-panel cta-section">
+  <div class="section-inner" id="cta-content"></div>
+</section>
+
+<footer>
+  <div class="footer-inner" id="footer-content"></div>
+</footer>
+
+<!-- AUTH MODAL -->
+<div class="modal" id="auth-modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Welcome back</div>
+        <div class="modal-subtitle" id="modal-subtitle">Sign in to your RentWise account.</div>
+      </div>
+      <button class="modal-close" id="auth-close" aria-label="Close">×</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-login" onclick="switchTab('login')">Sign in</button>
+      <button class="modal-tab" id="tab-register" onclick="switchTab('register')">Create account</button>
+    </div>
+    <div class="modal-body">
+      <!-- LOGIN PANEL -->
+      <div class="modal-panel active" id="panel-login">
+        <form class="modal-form" id="login-form" onsubmit="handleLogin(event)">
+          <div class="field">
+            <label for="login-email">Email address</label>
+            <input id="login-email" name="email" type="email" placeholder="name@email.com" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label for="login-password">Password</label>
+            <input id="login-password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+          </div>
+          <div class="modal-status" id="login-status"></div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit" style="width:100%;">Sign in to RentWise</button>
+          </div>
+                <div class="modal-divider" style="margin-top:0.75rem;font-size:0.82rem;color:var(--text-light);">
+                  Use your registered account to sign in, or create a new account to get started.
+                </div>
+        </form>
+      </div>
+
+      <!-- REGISTER PANEL -->
+      <div class="modal-panel" id="panel-register">
+        <form class="modal-form" id="register-form" onsubmit="handleRegister(event)">
+          <div class="field">
+            <label for="reg-name">Full name</label>
+            <input id="reg-name" name="displayName" type="text" placeholder="Your full name" required />
+          </div>
+          <div class="field">
+            <label for="reg-email">Email address</label>
+            <input id="reg-email" name="email" type="email" placeholder="name@email.com" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label for="reg-password">Password</label>
+            <input id="reg-password" name="password" type="password" placeholder="Choose a password (min. 6 chars)" minlength="6" required />
+          </div>
+          <div class="field">
+            <label for="reg-role">I want to</label>
+            <select id="reg-role" name="role">
+              <option value="renter">Rent storage space</option>
+              <option value="provider">List my storage space</option>
+            </select>
+          </div>
+          <div class="modal-status" id="register-status"></div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit" style="width:100%;">Create my account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+
+// ── CONTENT RENDERING ─────────────────────────────────────────────────
+async function loadContent() {
+  try {
+    const [sessRes, contentRes, listingsRes] = await Promise.all([fetch('/api/session'), fetch('/api/content'), fetch('/api/listings')]);
+    const { user } = await sessRes.json();
+    const d = await contentRes.json();
+    const listingsData = await listingsRes.json();
+    currentUser = user;
+    renderNav(d.nav, user);
+    renderHero(d.hero);
+    renderHowItWorks(d.howItWorks);
+    // Use merged listings from /api/listings (which already includes both CMS and DB listings)
+    renderListings({ ...d.listings, items: listingsData.listings || [] });
+    renderFeatures(d.features);
+    renderTestimonials(d.testimonials);
+    renderCta(d.cta);
+    renderFooter(d.footer);
+    initAnimations();
+    initCanvas();
+    document.getElementById('page-loader').classList.add('hidden');
+  } catch (e) {
+    document.getElementById('page-loader').innerHTML = '<p style="font-family:sans-serif;padding:2rem;">Failed to load. Please ensure the server is running.</p>';
+  }
+}
+
+function money(v) { return `₹${Number(v).toLocaleString('en-IN')}`; }
+
+function renderNav(n, user) {
+  document.getElementById('nav').innerHTML = `
+    <a class="nav-logo" href="/"><span class="nav-logo-rent">${n.brandRent}</span><span class="nav-logo-wise">${n.brandWise}</span></a>
+    <ul class="nav-links">${n.links.map(l => `<li><a href="${l.href}">${l.label}</a></li>`).join('')}</ul>
+    <div class="nav-cta">
+      ${user ? `
+        <span style="font-size:0.85rem;color:var(--text-gray);">Hi, ${user.displayName.split(' ')[0]}</span>
+        <a href="${user.role === 'provider' ? '/provider-dashboard' : '/dashboard'}" class="btn btn-outline" style="font-size:0.85rem;padding:0.5rem 1rem;">Dashboard</a>
+        <button class="btn btn-ghost" id="logout-btn" style="font-size:0.85rem;padding:0.5rem 1rem;">Sign out</button>
+      ` : `
+        <button class="btn btn-ghost" id="login-trigger" style="font-size:0.85rem;padding:0.5rem 1rem;">${n.loginText}</button>
+        <a href="/provider-dashboard" class="btn btn-primary" style="font-size:0.85rem;padding:0.5rem 1rem;">${n.ctaText}</a>
+      `}
+    </div>`;
+  document.getElementById('login-trigger')?.addEventListener('click', () => openAuthModal('login'));
+  document.getElementById('logout-btn')?.addEventListener('click', async () => {
+    await fetch('/api/logout', { method: 'POST' });
+    window.location.reload();
+  });
+}
+
+function renderHero(h) {
+  document.getElementById('hero-content').innerHTML = `
+    <div class="hero-badge fade-in">${h.badge}</div>
+    <h1 class="fade-in fade-delay-1">${h.headline} <span>${h.headlineHighlight}</span></h1>
+    <p class="hero-sub fade-in fade-delay-2">${h.subtext}</p>
+    <div class="hero-search-shell fade-in fade-delay-2">
+      <div class="hero-search-grid">
+        <div class="hero-search-field"><label>Location</label><input id="hero-location" type="text" placeholder="City or pincode" /></div>
+        <div class="hero-search-field"><label>Storage size</label><select id="hero-size">${['Any size','Small','Medium','Large'].map(s=>`<option>${s}</option>`).join('')}</select></div>
+        <div class="hero-search-field"><label>Duration</label><select id="hero-dur">${['Any duration','Days','Weeks','Months'].map(s=>`<option>${s}</option>`).join('')}</select></div>
+      </div>
+      <div><a id="hero-search-btn" href="/search" class="btn btn-primary">${h.searchCta}</a></div>
+    </div>
+    <div class="hero-tags fade-in fade-delay-2">${h.tags.map(t=>`<a class="hero-tag" href="/search">${t}</a>`).join('')}</div>`;
+  document.getElementById('hero-search-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    const loc = document.getElementById('hero-location').value;
+    const size = document.getElementById('hero-size').value;
+    const params = new URLSearchParams();
+    if (loc) params.set('location', loc);
+    if (size && size !== 'Any size') params.set('size', size);
+    window.location.href = '/search?' + params.toString();
+  });
+}
+
+function renderHowItWorks(hw) {
+  document.getElementById('how-it-works-content').innerHTML = `
+    <span class="section-tag">${hw.tag}</span>
+    <h2 class="section-title">${hw.title}</h2>
+    <p class="section-sub">${hw.subtitle}</p>
+    <div class="steps">${hw.steps.map((s,i) => `
+      <div class="step fade-in ${i>0?'fade-delay-'+i:''}">
+        <div class="step-num">${s.num}</div>
+        <h3>${s.title}</h3><p>${s.desc}</p>
+      </div>`).join('')}</div>`;
+}
+
+function renderListings(l) {
+  const items = Array.isArray(l.items) ? l.items : [];
+  document.getElementById('listings-content').innerHTML = `
+    <div class="listings-header">
+      <div><span class="section-tag">${l.tag}</span><h2 class="section-title">${l.title}</h2></div>
+      <a href="/search" class="btn btn-outline">${l.viewAllText}</a>
+    </div>
+    <div class="listings-grid">${items.length ? items.slice(0,3).map((item,i) => `
+      <a class="listing-card fade-in ${i>0?'fade-delay-'+i:''}" href="/storage?id=${item.id}">
+        <div class="listing-img">
+          <span class="listing-badge ${item.badgeType==='verified'?'verified':''}">${item.badge}</span>
+          ${(item.images && item.images[0]) ? `<img src="${item.images[0]}" alt="${item.name}" loading="lazy" />` : (item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy" />` : `<span>${item.emoji||'📦'}</span>`)}
+        </div>
+        <div class="listing-body">
+          <div class="listing-meta">
+            <div class="listing-name">${item.name}</div>
+            <div class="listing-price">${money(item.price)}<span>/mo</span></div>
+          </div>
+          <div class="listing-location">📍 ${item.location}</div>
+          <div class="listing-tags">${item.tags.map(t=>`<span class="listing-tag">${t}</span>`).join('')}</div>
+        </div>
+      </a>`).join('') : `<div class="panel-card" style="grid-column:1/-1;text-align:center;padding:2.5rem;color:var(--text-light);border:1px dashed var(--border-gray);background:var(--light-gray);">No provider listings yet. Once a host publishes a space, it will appear here automatically.</div>`}
+    </div>`;
+}
+
+function renderListings(l) {
+  const items = Array.isArray(l.items) ? l.items : [];
+  const cards = items.length
+    ? items.slice(0, 3).map((item, i) => `
+      <a class="listing-card fade-in ${i > 0 ? 'fade-delay-' + i : ''}" href="/storage?id=${item.id}">
+        <div class="listing-img">
+          <span class="listing-badge ${item.badgeType === 'verified' ? 'verified' : ''}">${item.badge || 'Available'}</span>
+          ${(item.images && item.images[0]) ? `<img src="${item.images[0]}" alt="${item.name}" loading="lazy" />` : (item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy" />` : `<span>${item.emoji || '📦'}</span>`)}
+        </div>
+        <div class="listing-body">
+          <div class="listing-meta">
+            <div class="listing-name">${item.name}</div>
+            <div class="listing-price">${money(item.price)}<span>/mo</span></div>
+          </div>
+          <div class="listing-location">📍 ${item.location}</div>
+          <div class="listing-tags">${(item.tags || []).map(tag => `<span class="listing-tag">${tag}</span>`).join('')}</div>
+        </div>
+      </a>`).join('')
+    : `<div class="panel-card" style="grid-column:1/-1;text-align:center;padding:2.5rem;color:var(--text-light);border:1px dashed var(--border-gray);background:var(--light-gray);">No provider listings yet. Once a host publishes a space, it will appear here automatically.</div>`;
+
+  document.getElementById('listings-content').innerHTML = `
+    <div class="listings-header">
+      <div><span class="section-tag">${l.tag}</span><h2 class="section-title">${l.title}</h2></div>
+      <a href="/search" class="btn btn-outline">${l.viewAllText}</a>
+    </div>
+    <div class="listings-grid">${cards}</div>`;
+}
+
+function renderFeatures(f) {
+  document.getElementById('features-content').innerHTML = `
+    <span class="section-tag">${f.tag}</span>
+    <h2 class="section-title">${f.title}</h2>
+    <p class="section-sub">${f.subtitle}</p>
+    <div class="features-grid">${(f.items || []).slice(0,3).map((item,i)=>`
+      <div class="feature-card fade-in ${i>0?'fade-delay-'+i:''}">
+        <span class="feature-icon">${item.icon}</span>
+        <h3>${item.title}</h3><p>${item.desc}</p>
+      </div>`).join('')}</div>`;
+}
+
+function renderTestimonials(t) {
+  document.getElementById('testimonials-content').innerHTML = `
+    <span class="section-tag">${t.tag}</span>
+    <h2 class="section-title">${t.title}</h2>
+    <div class="testimonials-grid">${(t.items || []).map((item,i)=>`
+      <div class="testimonial-card fade-in ${i>0?'fade-delay-'+i:''}">
+        <div class="stars">${'★'.repeat(item.stars || 5)}</div>
+        <p class="testimonial-text">"${item.text}"</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">${item.initials || '?'}</div>
+          <div><div class="author-name">${item.name}</div><div class="author-role">${item.role}</div></div>
+        </div>
+      </div>`).join('')}</div>`;
+}
+
+function renderCta(c) {
+  document.getElementById('cta-content').innerHTML = `
+    <span class="section-tag">${c.tag}</span>
+    <h2 class="section-title">${c.title}</h2>
+    <p class="section-sub">${c.subtitle}</p>
+    <div class="cta-btns fade-in">
+      <a href="/search" class="btn btn-white">${c.primaryText}</a>
+      <a href="/provider-dashboard" class="btn btn-outline" style="border-color:white;color:white;">${c.secondaryText}</a>
+    </div>`;
+}
+
+function renderFooter(f) {
+  document.getElementById('footer-content').innerHTML = `
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a class="nav-logo" href="/"><span class="nav-logo-rent" style="color:white;">Rent</span><span class="nav-logo-wise">Wise</span></a>
+        <p>${f.tagline}</p>
+      </div>
+      ${(f.columns || []).map(col=>`
+        <div class="footer-col">
+          <h4>${col.heading}</h4>
+          <ul>${(col.links || []).map(l=>`<li><a href="${l.href}">${l.label}</a></li>`).join('')}</ul>
+        </div>`).join('')}
+    </div>
+    <div class="footer-bottom">
+      <p>${f.copyright}</p>
+      <div style="display:flex;gap:1.5rem;">${(f.legalLinks || []).map(l=>`<a href="${l.href}" style="color:rgba(255,255,255,0.4);text-decoration:none;font-size:0.82rem;">${l.label}</a>`).join('')}</div>
+    </div>`;
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────
+const authModal = document.getElementById('auth-modal');
+document.getElementById('auth-close').addEventListener('click', closeAuthModal);
+authModal.addEventListener('click', e => { if (e.target === authModal) closeAuthModal(); });
+window.addEventListener('keydown', e => { if (e.key === 'Escape') closeAuthModal(); });
+
+function switchTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.modal-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+function openAuthModal(tab = 'login') {
+  switchTab(tab);
+  authModal.classList.add('open');
+  authModal.setAttribute('aria-hidden', 'false');
+  setTimeout(() => {
+    const first = authModal.querySelector('input');
+    if (first) first.focus();
+  }, 100);
+}
+
+function closeAuthModal() {
+  authModal.classList.remove('open');
+  authModal.setAttribute('aria-hidden', 'true');
+  document.getElementById('login-form').reset();
+  document.getElementById('register-form').reset();
+  document.getElementById('login-status').textContent = '';
+  document.getElementById('register-status').textContent = '';
+}
+
+function setStatus(id, msg, type = '') {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'modal-status ' + type;
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  setStatus('login-status', 'Checking credentials…');
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: fd.get('email'), password: fd.get('password') })
+    });
+    const data = await res.json();
+    if (!res.ok) { setStatus('login-status', data.error || 'Login failed', 'error'); return; }
+    setStatus('login-status', `Welcome, ${data.user.displayName}! Redirecting…`, 'success');
+    const dest = { provider: '/provider-dashboard', renter: '/dashboard' };
+    setTimeout(() => { window.location.href = dest[data.user.role] || '/'; }, 800);
+  } catch (_) {
+    setStatus('login-status', 'Unable to connect. Is the server running?', 'error');
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  setStatus('register-status', 'Creating your account…');
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: fd.get('email'), password: fd.get('password'), displayName: fd.get('displayName'), role: fd.get('role') })
+    });
+    const data = await res.json();
+    if (!res.ok) { setStatus('register-status', data.error || 'Registration failed', 'error'); return; }
+    setStatus('register-status', 'Account created! Redirecting…', 'success');
+    const dest = { provider: '/provider-dashboard', renter: '/dashboard' };
+    setTimeout(() => { window.location.href = dest[data.user.role] || '/'; }, 800);
+  } catch (_) {
+    setStatus('register-status', 'Unable to connect. Is the server running?', 'error');
+  }
+}
+
+// ── ANIMATIONS ────────────────────────────────────────────────────────
+function initAnimations() {
+  window.addEventListener('scroll', () => {
+    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 20);
+  });
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+}
+
+function initCanvas() {
+  const canvas = document.getElementById('diagram-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let nodes = [], w, h;
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = document.querySelector('.hero').offsetHeight;
+    nodes = Array.from({ length: w > 768 ? 55 : 28 }, () => ({
+      x: Math.random()*w, y: Math.random()*h,
+      vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4,
+      r: Math.random()*1.5+1
+    }));
+  }
+  function draw() {
+    ctx.clearRect(0,0,w,h);
+    for (let i=0;i<nodes.length;i++) {
+      for (let j=i+1;j<nodes.length;j++) {
+        const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if (d<140) { ctx.beginPath(); ctx.strokeStyle=`rgba(211,47,47,${(1-d/140)*0.35})`; ctx.lineWidth=0.8; ctx.moveTo(nodes[i].x,nodes[i].y); ctx.lineTo(nodes[j].x,nodes[j].y); ctx.stroke(); }
+      }
+    }
+    nodes.forEach(n => {
+      ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill();
+      n.x+=n.vx; n.y+=n.vy;
+      if(n.x<0||n.x>w) n.vx*=-1;
+      if(n.y<0||n.y>h) n.vy*=-1;
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', resize);
+  resize(); draw();
+}
+
+// Open modal if URL param present
+const params = new URLSearchParams(window.location.search);
+if (params.has('login')) { document.addEventListener('DOMContentLoaded', () => openAuthModal(params.get('login') === 'register' ? 'register' : 'login')); }
+
+loadContent();
+</script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+provider123 for provider@rentwise.local, provider1@rentwise.local, and provider2@rentwise.local
+renter123 for renter1@rentwise.local and renter2@rentwise.local
