@@ -8,13 +8,18 @@ const session = require('express-session');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Ensure data directory exists before connecting to DB
-const dataDir = path.join(__dirname, 'data');
+const isVercel = process.env.VERCEL === '1';
+const dataDir = isVercel ? '/tmp/data' : path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
+// When on Vercel, copy the default data.json if content.json doesn't exist
 const DATA_FILE = path.join(dataDir, 'content.json');
+if (isVercel && !fs.existsSync(DATA_FILE) && fs.existsSync(path.join(__dirname, 'data.json'))) {
+  fs.copyFileSync(path.join(__dirname, 'data.json'), DATA_FILE);
+}
+
 const DB_FILE = path.join(dataDir, 'users.db');
 const db = new sqlite3.Database(DB_FILE);
 
@@ -373,7 +378,7 @@ app.post('/api/upload', requireAuth, (req, res) => {
   const matches = data.match(/^data:(.+);base64,(.+)$/);
   if (!matches) return res.status(400).json({ error: 'Invalid data URL' });
   const safeName = `${Date.now()}-${path.basename(filename).replace(/[^a-zA-Z0-9.\-]/g, '_')}`;
-  const outDir = path.join(__dirname, 'public', 'uploads');
+  const outDir = isVercel ? '/tmp/uploads' : path.join(__dirname, 'public', 'uploads');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
   try {
     fs.writeFileSync(path.join(outDir, safeName), Buffer.from(matches[2], 'base64'));
@@ -395,7 +400,7 @@ app.post('/api/listings/:id/images', requireAuth, (req, res) => {
     const matches = data.match(/^data:(.+);base64,(.+)$/);
     if (!matches) return res.status(400).json({ error: 'Invalid data URL' });
     const safeName = `${Date.now()}-${path.basename(filename).replace(/[^a-zA-Z0-9.\-]/g, '_')}`;
-    const outDir = path.join(__dirname, 'public', 'uploads');
+    const outDir = isVercel ? '/tmp/uploads' : path.join(__dirname, 'public', 'uploads');
     if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
     try {
       fs.writeFileSync(path.join(outDir, safeName), Buffer.from(matches[2], 'base64'));
@@ -427,7 +432,7 @@ app.delete('/api/listings/:id/images', requireAuth, (req, res) => {
     const idx = images.indexOf(url);
     if (idx === -1) return res.status(404).json({ error: 'Image not found on listing' });
     const filename = path.basename(url);
-    const outDir = path.join(__dirname, 'public', 'uploads');
+    const outDir = isVercel ? '/tmp/uploads' : path.join(__dirname, 'public', 'uploads');
     const filePath = path.join(outDir, filename);
     try {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
@@ -532,4 +537,7 @@ app.get('/image-proxy', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`RentWise running at http://localhost:${PORT}`));
+if (!isVercel) {
+  app.listen(PORT, () => console.log(`RentWise running at http://localhost:${PORT}`));
+}
+module.exports = app;
